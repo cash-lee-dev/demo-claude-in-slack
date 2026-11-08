@@ -4,7 +4,7 @@
 
 ## 專案目的
 
-NEON//GRID 是一個賽博龐克霓虹風格的前端示範專案：整個系統需要登入，登入成功後進入首頁，首頁以巨大的故障風霓虹標題 **"This is Your World!"** 迎接使用者。
+NEON//GRID 是一個賽博龐克霓虹風格的前端示範專案：整個系統需要登入，登入成功後進入首頁，首頁以巨大的故障風霓虹標題 **"This is Your World!"** 迎接使用者。所有頁面切換都有「雙開門」轉場。
 
 - 純前端、沒有後端；帳號密碼完全在瀏覽器內驗證。
 - 資安是刻意被忽略的（環境變數會被打包進前端 bundle），重點在前端架構與視覺呈現。
@@ -16,9 +16,92 @@ NEON//GRID 是一個賽博龐克霓虹風格的前端示範專案：整個系統
 | UI 框架 | Vue 3（單檔元件、`<script setup>`） | 僅此一個執行期依賴 |
 | 建置工具 | Vite + `@vitejs/plugin-vue` | 開發伺服器與打包 |
 | 樣式 | Tailwind CSS v4（`tailwindcss` + `@tailwindcss/vite`） | 主題 token（配色、字型、動畫）定義在 `@theme`，以 utility class 撰寫樣式 |
-| 頁面模式 | MPA（多頁應用） | 多個 HTML 入口，由 Vite `build.rollupOptions.input` 設定 |
+| 頁面模式 | SPA（單頁應用）+ `vue-router`（hash 模式） | 單一 `index.html` 入口與單一 Vue app，頁面是 `<router-view>` 內的 route view |
 | 驗證 | Web Crypto API（HMAC-SHA-256） | 以 hash key 對密碼做雜湊後比對，session 存在 `localStorage` |
 | 設定 | Vite 環境變數（`VITE_*`） | hash key、管理員帳號與密碼 hash 皆由環境變數提供 |
 | 視覺特效 | CSS 動畫與 Canvas 2D | 不使用額外的動畫或圖形套件 |
 | 部署 | GitHub Pages + GitHub Actions | push 到 `main` 時自動建置並部署；建置用的環境變數來自 GitHub Environment `Prod` |
 | 執行環境 | Node.js 20 以上、npm | |
+
+## SPA 結構
+
+```
+index.html                         唯一的 HTML 入口，載入 /src/main.js
+src/
+  main.js                          建立單一 Vue app：install router → await router.isReady() → mount；載入 tailwind.css 與所有門主題
+  App.vue                          App 層級：<router-view :route="displayRoute"> + 全域 <DoorTransition>
+  router/index.js                  路由表、meta、驗證守衛（beforeEach）
+  views/                           route view：LoginView、HomeView、BeachView、SpaceView、ForestView（後三者為「建構中」placeholder）
+  components/
+    DoorTransition.vue             雙開門 overlay（門板、接縫、CSS）
+    HudCard.vue                    首頁的 HUD 卡片
+  composables/
+    useDoorTransition.js           轉場時間軸與「畫面路由 / URL 路由分離」機制
+    useSession.js                  currentSession 與全域 session 監看（過期、跨分頁登出）
+  styles/door-themes/<theme>.css   每個主題一個檔案，定義門的 CSS 變數（main.js 以 import.meta.glob 自動載入）
+  shared/                          auth.js、config.js、tailwind.css、共用元件（NeonBackdrop、NeonButton、WorldPlaceholder…）
+```
+
+### Router
+
+- `createWebHashHistory(import.meta.env.BASE_URL)`：網址為 `/#/home` 形式，GitHub Pages 重新整理任何路由都不會 404；Vite base 不變（build / preview 為 `/demo-claude-in-slack/`，dev 為 `/`）。
+- 路由表（每個路由都有 `meta.theme`，需登入的有 `meta.requiresAuth`）：
+
+| 路徑 | View | `meta.theme` | 需登入 |
+| --- | --- | --- | --- |
+| `/` | redirect 到 `/home` | | |
+| `/login` | `LoginView` | `neon` | 否 |
+| `/home` | `HomeView` | `neon` | 是 |
+| `/beach` | `BeachView` | `beach` | 是 |
+| `/space` | `SpaceView` | `space` | 是 |
+| `/forest` | `ForestView` | `forest` | 是 |
+| 其他任何路徑 | redirect 到 `/home` | | |
+
+### 驗證守衛
+
+`router.beforeEach` 以 `auth.js` 的 `getSession()`（HMAC 簽章 + 效期，行為未改）判斷：
+
+- 未登入存取 `meta.requiresAuth` 的路由 -> `/login`（`/` 與未知路徑先 redirect 到 `/home`，再由守衛轉到 `/login`）。
+- 已登入造訪 `/login` -> `/home`。
+- 登出（`logout()` 清除 session 後 `router.replace('/login')`）-> `/login`。
+- `App.vue` 的 `useSessionWatcher`：每秒檢查 + 監聽 `storage`（`onSessionStorageChange`），session 過期或其他分頁登出時，若目前在需登入的路由就 `router.replace('/login')`。
+
+### 雙開門轉場
+
+每次路由切換（login↔home、home↔世界、登出、瀏覽器上一頁 / 下一頁）都播放：左右門板從兩側滑入在中央合上（0.6s）-> 停留 0.2s（此時才切換底下的 route view）-> 從中央向兩側打開（0.6s）。首次載入頁面不播放。
+
+機制（`composables/useDoorTransition.js`）：
+
+1. router 照常、立即完成導覽（含守衛與上一頁 / 下一頁），`router.currentRoute` 馬上更新。
+2. `App.vue` 不直接顯示 `currentRoute`，而是 `<router-view :route="displayRoute">`；`displayRoute` 只在門板完全合上時才被設為最新的 `currentRoute`。
+3. 轉場進行中又發生導覽（快速連點、上一頁）時不會重疊也不會卡死：這一輪結束後若 `currentRoute` 與畫面不同，再播一輪直接到最新路由。
+4. overlay 全螢幕、`z-index: 9999`、轉場期間 `pointer-events: auto` 擋住指標輸入，底下內容同時 `inert`（鍵盤也無法操作）。
+5. `prefers-reduced-motion: reduce`：門板不滑動，改為整片約 0.3s 淡入、淡出（`tailwind.css` 的全域減少動態規則已排除 `.door-overlay`）。
+
+### 主題換色機制（門的顏色）
+
+門的顏色由「**目的地**路由」的 `meta.theme` 決定：轉場時 overlay 會帶上 `data-theme="<theme>"`，門板 CSS 讀取以下變數：
+
+| 變數 | 說明 |
+| --- | --- |
+| `--door-bg` | 門板底色，color 或 gradient（用於 `background`） |
+| `--door-edge` | 門板內側邊框與中央接縫的顏色（color） |
+| `--door-glow` | 光暈顏色（color，建議帶透明度） |
+
+`src/styles/door-themes/neon.css` 是範例（同時掛在 `:root` 當預設值，尚未定義的主題會退回 neon 外觀）。
+
+### 如何新增世界 / 主題
+
+1. 新增 `src/views/XxxView.vue`（或取代對應 placeholder 的內容）。
+2. 在 `src/router/index.js` 的路由表新增一行，各世界各佔獨立一行：`{ path: '/xxx', name: 'xxx', component: XxxView, meta: { theme: 'xxx', requiresAuth: true, title: '...' } }`。
+3. 新增 `src/styles/door-themes/xxx.css`：
+
+```css
+[data-theme='xxx'] {
+  --door-bg: linear-gradient(180deg, #..., #...);
+  --door-edge: #...;
+  --door-glow: rgb(... / 0.7);
+}
+```
+
+不需要修改 `main.js`、`DoorTransition.vue` 或 vite 設定。

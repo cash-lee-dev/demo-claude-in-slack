@@ -269,9 +269,10 @@
   mask-image: var(--stripes);
 }
 
-/* 減少動態：關閉所有動畫與過場（canvas 元件另外自行判斷） */
+/* 減少動態：關閉所有動畫與過場（canvas 元件另外自行判斷）
+   例外：雙開門 overlay 在此模式下改用約 0.3s 的淡入淡出（見 DoorTransition.vue） */
 @media (prefers-reduced-motion: reduce) {
-  *,
+  *:not(.door-overlay),
   *::before,
   *::after {
     animation-duration: 0.001ms !important;

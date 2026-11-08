@@ -11,8 +11,3 @@ export const AUTH_CONFIG = {
   storageKey: 'neon.session.v1',
   sessionTtlMs: 8 * 60 * 60 * 1000, // 8 小時
 }
-
-export const PAGES = {
-  login: 'index.html',
-  home: 'home.html',
-}

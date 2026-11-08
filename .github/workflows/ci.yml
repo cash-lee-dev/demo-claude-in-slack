@@ -27,5 +27,5 @@ jobs:
           # HMAC-SHA-256('ci-dummy-hash-key', 'ci-dummy-password')
           VITE_ADMIN_PASSWORD_HASH: f28614e5091d62cee3f3a8a4ec6aeca1b86511c116db3421d6373de142799e44
 
-      - name: Check MPA entry points exist
-        run: test -f dist/index.html && test -f dist/home.html
+      - name: Check single SPA entry point (index.html only)
+        run: test -f dist/index.html && test "$(find dist -maxdepth 1 -name "*.html" | wc -l)" -eq 1

@@ -1,5 +1,4 @@
 import { AUTH_CONFIG } from './config.js'
-import { goTo } from './nav.js'
 
 const enc = new TextEncoder()
 
@@ -143,31 +142,9 @@ export function clearSession() {
   }
 }
 
+/** 登出：只清除 session；導向 /login 由呼叫端（router）負責 */
 export function logout() {
   clearSession()
-  goTo('login')
-}
-
-/* ---------- 頁面守衛 ---------- */
-
-/** 受保護頁面使用：沒有有效 session 就導向登入頁並回傳 null */
-export async function requireAuth() {
-  const session = await getSession()
-  if (!session) {
-    goTo('login')
-    return null
-  }
-  return session
-}
-
-/** 登入頁使用：已登入就直接前往首頁 */
-export async function redirectIfAuthed() {
-  const session = await getSession()
-  if (session) {
-    goTo('home')
-    return true
-  }
-  return false
 }
 
 /** 其他分頁登出 / 登入時同步 */
