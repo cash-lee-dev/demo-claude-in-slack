@@ -24,6 +24,13 @@
   --color-fog: #e9e7ff;
   --color-dim: #8d88bd;
 
+  /* 海灘世界（/beach）：天藍 / 海藍 + 白，沙色只做小面積點綴。門的顏色見 styles/door-themes/beach.css */
+  --color-beach-sky: #4fc3f7;
+  --color-beach-sea: #0288d1;
+  --color-beach-deep: #01579b;
+  --color-beach-mist: #e1f5fe;
+  --color-beach-sand: #f6e7c1;
+
   /* 字型（Google Fonts 於 HTML 以 <link> 載入，失敗時退回系統字型） */
   --font-display: 'Orbitron', 'Eurostile', 'Bank Gothic', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Rajdhani', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -64,7 +71,21 @@
   --animate-spin-angle: spin-angle 6s linear infinite;
   --animate-load: load 0.9s ease-in-out infinite;
   --animate-glitch-skew: glitch-skew 4.2s infinite steps(1, end);
+  --animate-cloud-drift: cloud-drift 120s linear infinite;
+  --animate-sun-rays: sun-rays 90s linear infinite;
+  --animate-sun-glow: sun-glow 6s ease-in-out infinite;
 
+  /* 雲：以 --x（雲的起始 left）為基準從畫面左外漂到右外；reduced-motion 時動畫被關掉，雲停在 --x */
+  @keyframes cloud-drift {
+    from { transform: translateX(calc(-1 * var(--x, 0px) - 40vw)); }
+    to { transform: translateX(calc(100vw - var(--x, 0px))); }
+  }
+  @keyframes sun-rays {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes sun-glow {
+    50% { transform: scale(1.08); opacity: 0.85; }
+  }
   @keyframes flicker {
     0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
     20%, 24%, 55% { opacity: 0.45; }
