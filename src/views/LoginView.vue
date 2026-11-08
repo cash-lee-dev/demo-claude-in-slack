@@ -1,11 +1,13 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue'
-import NeonBackdrop from '../../shared/components/NeonBackdrop.vue'
-import GlitchText from '../../shared/components/GlitchText.vue'
-import Typewriter from '../../shared/components/Typewriter.vue'
-import NeonButton from '../../shared/components/NeonButton.vue'
-import { login, isAuthConfigured } from '../../shared/auth.js'
-import { goTo } from '../../shared/nav.js'
+import { useRouter } from 'vue-router'
+import NeonBackdrop from '../shared/components/NeonBackdrop.vue'
+import GlitchText from '../shared/components/GlitchText.vue'
+import Typewriter from '../shared/components/Typewriter.vue'
+import NeonButton from '../shared/components/NeonButton.vue'
+import { login, isAuthConfigured } from '../shared/auth.js'
+
+const router = useRouter()
 
 const username = ref('')
 const password = ref('')
@@ -48,7 +50,7 @@ async function onSubmit() {
     }
     granted.value = true
     await sleep(650)
-    goTo('home')
+    router.replace('/home')
   } catch (e) {
     console.error(e)
     error.value = 'SYSTEM FAULT // 無法完成驗證'

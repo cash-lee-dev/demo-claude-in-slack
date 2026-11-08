@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-NEON//GRID：賽博龐克霓虹風格的 Vue 3 + Vite + Tailwind CSS 多頁應用（MPA），純前端登入（Web Crypto HMAC-SHA-256），登入後進入首頁 "This is Your World!"，部署到 GitHub Pages。
+NEON//GRID：賽博龐克霓虹風格的 Vue 3 + Vite + Tailwind CSS 單頁應用（SPA，vue-router hash 模式），純前端登入（Web Crypto HMAC-SHA-256），登入後進入首頁 "This is Your World!"，所有頁面切換有雙開門轉場，部署到 GitHub Pages。
 
 ## 需要了解專案時請閱讀
 
@@ -18,6 +18,14 @@ npm run build        # 打包到 dist/（base 預設 /demo-claude-in-slack/）
 npm run preview      # 預覽打包結果
 npm run hash -- <password>   # 以 hash key 產生密碼 hash
 ```
+
+## SPA 結構速查
+
+- 單一入口：`index.html` + `src/main.js`（單一 Vue app，`App.vue` 內是 `<router-view>` 與全域 `DoorTransition`）。**不要**再新增 HTML 入口，CI 會檢查 `dist` 只有一個 HTML。
+- 路由：`src/router/index.js`（hash 模式）。每個路由都要有 `meta.theme`，需登入的加 `meta.requiresAuth: true`；導覽一律用 `router.push/replace`，不要用 `window.location`。
+- 守衛：`router.beforeEach` 使用 `src/shared/auth.js` 的 `getSession()`（auth 行為不可改）；未登入 -> `/login`、已登入造訪 `/login` -> `/home`、未知路徑 -> `/home`。session 過期（`exp` 計時）/ 跨分頁登出由 `useSessionWatcher`（`composables/useSession.js`）踢回 `/login`。
+- 轉場：`composables/useDoorTransition.js` 把「畫面路由（`displayRoute`）」與「URL 路由」分離，門合上時才切換畫面；進行中的導覽會排隊、不重疊；reduced-motion 改淡入淡出。
+- 新增世界 / 主題：新增 `src/views/XxxView.vue`、在路由表加獨立一行（lazy import：`component: () => import('../views/XxxView.vue')`，`meta.theme: 'xxx'`）、新增 `src/styles/door-themes/xxx.css` 定義 `[data-theme='xxx']` 的 `--door-bg` / `--door-edge` / `--door-glow`（自動載入，不必改其他檔案）。詳見 @docs/architecture.md。
 
 ## 環境變數
 

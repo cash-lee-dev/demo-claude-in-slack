@@ -1,9 +1,9 @@
 # demo-claude-in-slack — NEON//GRID
 
-賽博龐克霓虹風格的 **Vue 3 多頁應用（MPA）**：整個系統需要登入，登入頁驗證通過後進入首頁，首頁顯示巨大的故障風霓虹標題 **"This is Your World!"**。
+賽博龐克霓虹風格的 **Vue 3 單頁應用（SPA，vue-router hash 模式）**：整個系統需要登入，登入頁驗證通過後進入首頁，首頁顯示巨大的故障風霓虹標題 **"This is Your World!"**；所有頁面切換都有「雙開門」轉場。
 
 - 純前端、無後端：帳密完全在瀏覽器內驗證（比對的是 hash，不是明文）
-- 技術：Vue 3 + Vite + Tailwind CSS v4（執行期只有 Vue 一個依賴）
+- 技術：Vue 3 + vue-router + Vite + Tailwind CSS v4（執行期依賴只有 Vue 與 vue-router）
 - 視覺：霓虹藍紫主色、透視網格地板、數位雨、霓虹城市天際線、CRT 掃描線、故障文字、玻璃擬態登入卡、打字機副標；支援 `prefers-reduced-motion` 與手機版面
 
 ## 快速開始
@@ -57,32 +57,50 @@ printf '%s' '<password>' | openssl dgst -sha256 -hmac '<hash key>' | sed 's/^.*=
 1. 輸入的密碼以 Web Crypto 計算 `HMAC-SHA-256(hashKey, password)`（hex）。
 2. 與使用者清單中儲存的 hash 做定長比對。管理員的 hash 直接取自 `VITE_ADMIN_PASSWORD_HASH`（沒設定時才用 `VITE_ADMIN_PASSWORD` 在執行時算出來）；要新增使用者，把 `{ username, passwordHash, role }` 加進 `src/shared/auth.js` 的 `getUsers()`，或使用 `VITE_EXTRA_USERS`。
 3. 成功後把 session token（`base64url(payload).HMAC簽章`，payload 含 username、角色、簽發/到期時間，預設 8 小時）寫入 `localStorage`。
-4. 每個受保護頁面在掛載前先驗證 token 的簽章與效期，失敗就導向登入頁；登入頁若已登入則直接導向首頁。首頁右上角有 LOGOUT，跨分頁登出也會同步。
+4. `router.beforeEach` 守衛在每次導覽時驗證 token 的簽章與效期：未登入存取受保護路由導向 `/login`；已登入造訪 `/login` 導向 `/home`；未知路徑導向 `/home`。首頁右上角有 LOGOUT，跨分頁登出、session 過期也會由 App 層級的監看踢回 `/login`。
 
 > `crypto.subtle` 只能在安全環境（HTTPS 或 `localhost`）使用，GitHub Pages 與本機開發都符合。
 
-## MPA 結構
+## SPA 結構
 
 ```
-index.html                 登入頁入口
-home.html                  登入後的首頁入口
-vite.config.js             build.rollupOptions.input 設定兩個入口 + base 設定
+index.html                 唯一的 HTML 入口
+vite.config.js             base 設定（單一入口，不需要 rollupOptions.input）
 scripts/hash.mjs           產生 passwordHash 的小工具
 docs/                      給後續 agent 閱讀的專案文件（索引見 docs/README.md）
 CLAUDE.md                  agent 入門指引，引用 docs/ 各文件
 src/
-  pages/
-    login/  main.js  LoginApp.vue
-    home/   main.js  HomeApp.vue
+  main.js                  單一 Vue app 入口
+  App.vue                  <router-view> + 全域雙開門轉場
+  router/index.js          路由表（含 meta.theme）與驗證守衛
+  views/                   LoginView / HomeView / BeachView / SpaceView / ForestView（世界頁目前是「建構中」placeholder）
+  components/              DoorTransition.vue（雙開門）、HudCard.vue
+  composables/             useDoorTransition.js（轉場時間軸）、useSession.js（session 與監看）
+  styles/door-themes/      每個主題一個 CSS 檔，定義門的 --door-bg / --door-edge / --door-glow
   shared/
-    auth.js                雜湊、登入、session、頁面守衛
-    config.js              讀取環境變數、頁面名稱
-    nav.js                 以 import.meta.env.BASE_URL 組頁面網址
-    tailwind.css           Tailwind 入口：@theme（配色/字型/動畫 token）+ 少量無法用 utility 表達的具名小工具（glitch、流動邊框、背景層）
-    components/            NeonBackdrop / RainCanvas / Skyline / GlitchText / Typewriter / NeonButton（樣式皆以 Tailwind utility class 撰寫）
+    auth.js                雜湊、登入、session、storage 變更監聽
+    config.js              讀取環境變數
+    tailwind.css           Tailwind 入口：@theme（配色/字型/動畫 token）+ 少量無法用 utility 表達的具名小工具
+    components/            NeonBackdrop / RainCanvas / Skyline / GlitchText / Typewriter / NeonButton / WorldPlaceholder
 ```
 
-頁面之間的跳轉一律透過 `src/shared/nav.js`（`import.meta.env.BASE_URL`），所以在本機 `/` 與 GitHub Pages `/demo-claude-in-slack/` 都能正確運作。要新增頁面：在根目錄加 `xxx.html`、`src/pages/xxx/`，把它加進 `vite.config.js` 的 `input`，並在入口 `main.js` 呼叫 `requireAuth()`。
+路由使用 hash 模式（`/#/home`），GitHub Pages 重新整理任何路由都不會 404；頁面切換一律用 router（`router.push` / `router.replace`）。
+
+| 路徑 | 說明 | 需登入 |
+| --- | --- | --- |
+| `/login` | 登入頁 | 否 |
+| `/home` | 首頁（`/` 與未知路徑都導向這裡，再由守衛判斷） | 是 |
+| `/beach` `/space` `/forest` | 世界頁（目前為 placeholder） | 是 |
+
+### 雙開門轉場
+
+每次路由切換（含上一頁 / 下一頁、登出）都會播放：左右門板 0.6s 合上 -> 停留 0.2s（此時切換畫面）-> 0.6s 從中央打開；首次載入不播放；轉場中快速重複導覽會排隊、不重疊；`prefers-reduced-motion` 時改為約 0.3s 淡入淡出。門的顏色由目的地路由的 `meta.theme` 對應到 `[data-theme]` CSS 變數（`--door-bg`、`--door-edge`、`--door-glow`）。細節見 [docs/architecture.md](./docs/architecture.md)。
+
+### 新增世界 / 主題
+
+1. 新增 `src/views/XxxView.vue`；
+2. 在 `src/router/index.js` 加一行路由（lazy import），`meta: { theme: 'xxx', requiresAuth: true }`；
+3. 新增 `src/styles/door-themes/xxx.css`，在 `[data-theme='xxx']` 內定義三個門的變數（`main.js` 會自動載入該資料夾所有 CSS）。
 
 ## 部署（GitHub Pages）
 

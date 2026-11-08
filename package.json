@@ -14,7 +14,8 @@
     "hash": "node scripts/hash.mjs"
   },
   "dependencies": {
-    "vue": "^3.5.45"
+    "vue": "^3.5.45",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.5",

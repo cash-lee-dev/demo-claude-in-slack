@@ -1,0 +1,19 @@
+/*
+ * 雙開門主題：neon（login / home）
+ *
+ * 每個主題一個檔案，檔名即主題名（對應路由 meta.theme）。main.js 會自動載入
+ * src/styles/door-themes/*.css，新增主題只要新增檔案，不需要修改其他地方。
+ *
+ * 一個主題只需要定義三個 CSS 變數（寫在 [data-theme='<name>'] 之下）：
+ *   --door-bg    門板底色：color 或 gradient（用於 background）
+ *   --door-edge  門板內側邊框與中央接縫的顏色（color）
+ *   --door-glow  光暈顏色（color，建議帶透明度）
+ *
+ * neon 同時掛在 :root 作為預設值：還沒定義樣式的主題會退回 neon 的外觀。
+ */
+:root,
+[data-theme='neon'] {
+  --door-bg: linear-gradient(180deg, #120a40 0%, #07061a 55%, #0d0a2e 100%);
+  --door-edge: #00e5ff;
+  --door-glow: rgb(123 97 255 / 0.75);
+}
