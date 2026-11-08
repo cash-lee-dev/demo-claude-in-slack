@@ -20,5 +20,5 @@ NEON//GRID 是一個賽博龐克霓虹風格的前端示範專案：整個系統
 | 驗證 | Web Crypto API（HMAC-SHA-256） | 以 hash key 對密碼做雜湊後比對，session 存在 `localStorage` |
 | 設定 | Vite 環境變數（`VITE_*`） | hash key、管理員帳號與密碼 hash 皆由環境變數提供 |
 | 視覺特效 | CSS 動畫與 Canvas 2D | 不使用額外的動畫或圖形套件 |
-| 部署 | GitHub Pages + GitHub Actions | push 到 `main` 時自動建置並部署 |
+| 部署 | GitHub Pages + GitHub Actions | push 到 `main` 時自動建置並部署；建置用的環境變數來自 GitHub Environment `Prod` |
 | 執行環境 | Node.js 20 以上、npm | |

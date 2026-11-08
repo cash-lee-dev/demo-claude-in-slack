@@ -32,6 +32,7 @@ npm run hash -- <password>   # 以 hash key 產生密碼 hash
 
 - PR 一律以 `main` 為目標分支。
 - push 到 `main` 後由 GitHub Actions（`.github/workflows/deploy.yml`）建置並部署到 GitHub Pages；PR 會跑 `ci.yml` 的 build 檢查。
+- 部署環境是 GitHub Environment **`Prod`**（`deploy.yml` 的 `build` job 指定 `environment: Prod`）：三個 `VITE_*` 值（hash key、管理員帳號、管理員密碼 hash；明文密碼為選填備援）要設定在 Settings → Environments → Prod 的 Environment secrets，不是 repository secrets。Pages Source 需為 GitHub Actions。
 
 ## 維護文件的規則
 

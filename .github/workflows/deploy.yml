@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # VITE_* 變數/機密從 GitHub Environment「Prod」讀取（Settings → Environments → Prod）
+    environment: Prod
     steps:
       - uses: actions/checkout@v4
 

@@ -50,7 +50,7 @@ npm run hash -- '<password>'
 printf '%s' '<password>' | openssl dgst -sha256 -hmac '<hash key>' | sed 's/^.*= //'
 ```
 
-把得到的 64 字元 hex 填入 `VITE_ADMIN_PASSWORD_HASH`（本機 `.env`；部署時放在 repo secret）。
+把得到的 64 字元 hex 填入 `VITE_ADMIN_PASSWORD_HASH`（本機 `.env`；部署時放在 GitHub Environment `Prod` 的 secret）。
 
 ## 驗證流程
 
@@ -88,10 +88,10 @@ src/
 
 `.github/workflows/deploy.yml` 會在 **push 到 `main`**（也就是 PR 合併後）或手動 `workflow_dispatch` 時，執行 `npm ci` → `npm run build` → 上傳 `dist` → 部署到 GitHub Pages。`ci.yml` 會在 PR 上用假的環境變數跑一次 build 當檢查。
 
-Repo 擁有者第一次需要做兩件事：
+Repo 擁有者第一次需要做兩件事（環境為 **Prod**）：
 
 1. **Settings → Pages → Build and deployment → Source** 選 **GitHub Actions**。
-2. **Settings → Secrets and variables → Actions** 新增 repository secrets：`VITE_AUTH_HASH_KEY`、`VITE_ADMIN_USERNAME`、`VITE_ADMIN_PASSWORD_HASH`（`VITE_ADMIN_PASSWORD` 為選填備援）。
+2. **Settings → Environments → Prod**（沒有就先建立名為 `Prod` 的 environment，大小寫需一致），在該 environment 的 **Environment secrets** 新增：`VITE_AUTH_HASH_KEY`、`VITE_ADMIN_USERNAME`、`VITE_ADMIN_PASSWORD_HASH`（`VITE_ADMIN_PASSWORD` 為選填備援）。`deploy.yml` 的 `build` job 指定了 `environment: Prod`，所以這些值是從 Prod environment 讀取，而不是 repository secrets。
 
 部署後網址：`https://<owner>.github.io/demo-claude-in-slack/`
 
