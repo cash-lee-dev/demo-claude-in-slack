@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import '../../shared/theme.css'
+import '../../shared/tailwind.css'
 import { requireAuth } from '../../shared/auth.js'
 import HomeApp from './HomeApp.vue'
 

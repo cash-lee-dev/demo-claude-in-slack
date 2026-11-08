@@ -79,16 +79,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas ref="canvas" class="rain" />
+  <canvas
+    ref="canvas"
+    class="absolute inset-0 size-full opacity-50 [mask-image:linear-gradient(to_bottom,#000_0%,#000_55%,transparent_100%)]"
+  />
 </template>
-
-<style scoped>
-.rain {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.5;
-  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-}
-</style>

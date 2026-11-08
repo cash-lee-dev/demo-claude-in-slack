@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'node:url'
 
 const r = (p) => fileURLToPath(new URL(p, import.meta.url))
@@ -14,7 +15,7 @@ export default defineConfig(({ command, isPreview }) => {
 
   return {
     base,
-    plugins: [vue()],
+    plugins: [vue(), tailwindcss()],
     build: {
       // MPA：每個 HTML 都是獨立入口
       rollupOptions: {

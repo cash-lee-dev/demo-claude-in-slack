@@ -44,7 +44,12 @@ export const hashPassword = (password) => hmacHex(password)
 /* ---------- 使用者清單（想新增使用者就加在這裡） ---------- */
 
 export function isAuthConfigured() {
-  return Boolean(AUTH_CONFIG.hashKey && AUTH_CONFIG.adminUsername && AUTH_CONFIG.adminPassword && globalThis.crypto?.subtle)
+  return Boolean(
+    AUTH_CONFIG.hashKey &&
+    AUTH_CONFIG.adminUsername &&
+    (AUTH_CONFIG.adminPasswordHash || AUTH_CONFIG.adminPassword) &&
+    globalThis.crypto?.subtle,
+  )
 }
 
 let usersPromise
@@ -53,10 +58,11 @@ export function getUsers() {
   usersPromise ??= (async () => {
     const users = []
     if (isAuthConfigured()) {
-      // 管理員：由環境變數的密碼在執行時算出 hash，之後只比對 hash
+      // 管理員：優先使用環境變數預先算好的 hash；沒有才由明文密碼在執行時算出 hash。
+      // 之後一律只比對 hash，不做明文比較。
       users.push({
         username: AUTH_CONFIG.adminUsername,
-        passwordHash: await hashPassword(AUTH_CONFIG.adminPassword),
+        passwordHash: AUTH_CONFIG.adminPasswordHash || (await hashPassword(AUTH_CONFIG.adminPassword)),
         role: 'admin',
       })
     }

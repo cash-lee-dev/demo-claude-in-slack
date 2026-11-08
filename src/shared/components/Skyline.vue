@@ -188,14 +188,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas ref="canvas" class="skyline" />
+  <canvas ref="canvas" class="absolute inset-x-0 w-full" />
 </template>
-
-<style scoped>
-.skyline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  width: 100%;
-}
-</style>

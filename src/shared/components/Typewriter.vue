@@ -47,21 +47,9 @@ onBeforeUnmount(() => clearTimeout(timer))
 </script>
 
 <template>
-  <span class="typewriter" aria-live="off">{{ shown }}<i class="cursor" aria-hidden="true" /></span>
+  <span aria-live="off">{{ shown
+    }}<i
+      class="ml-0.5 inline-block h-[1.05em] w-[0.6em] animate-blink bg-neon-cyan align-text-bottom shadow-[0_0_10px_var(--color-neon-cyan)]"
+      aria-hidden="true"
+    /></span>
 </template>
-
-<style scoped>
-.cursor {
-  display: inline-block;
-  width: 0.6em;
-  height: 1.05em;
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  background: var(--cyan);
-  box-shadow: 0 0 10px var(--cyan);
-  animation: blink 1s steps(1) infinite;
-}
-@keyframes blink {
-  50% { opacity: 0; }
-}
-</style>

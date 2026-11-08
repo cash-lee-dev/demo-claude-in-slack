@@ -4,6 +4,8 @@ const env = import.meta.env
 export const AUTH_CONFIG = {
   hashKey: env.VITE_AUTH_HASH_KEY ?? '',
   adminUsername: env.VITE_ADMIN_USERNAME ?? '',
+  // 建議使用預先算好的 hash（HMAC-SHA-256(hashKey, password) 的 hex）；沒有的話才退回明文密碼
+  adminPasswordHash: (env.VITE_ADMIN_PASSWORD_HASH ?? '').trim().toLowerCase(),
   adminPassword: env.VITE_ADMIN_PASSWORD ?? '',
   extraUsersJson: env.VITE_EXTRA_USERS ?? '',
   storageKey: 'neon.session.v1',

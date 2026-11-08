@@ -7,5 +7,5 @@ defineProps({
 </script>
 
 <template>
-  <component :is="tag" class="glitch" :class="{ 'glitch-fast': fast }" :data-text="text">{{ text }}</component>
+  <component :is="tag" class="glitch" :class="{ '[--glitch-dur:1.6s]': fast }" :data-text="text">{{ text }}</component>
 </template>

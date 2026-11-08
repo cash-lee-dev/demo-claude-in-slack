@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import '../../shared/theme.css'
+import '../../shared/tailwind.css'
 import { redirectIfAuthed } from '../../shared/auth.js'
 import LoginApp from './LoginApp.vue'
 
