@@ -94,7 +94,7 @@ src/
 | 主題 | 檔案 | 使用的路由 | 門的配色 |
 | --- | --- | --- | --- |
 | `neon` | `neon.css` | `/login`、`/home` | 深藍紫底 + 青色邊 + 紫色光暈（同時掛在 `:root` 當預設值，尚未定義的主題 `space`、`forest` 會退回 neon 外觀） |
-| `beach` | `beach.css` | `/beach` | 天藍 `#4FC3F7` -> 海藍 `#0288D1` -> 深藍漸層底 + 白色邊 + 天藍光暈 |
+| `beach` | `beach.css` | `/beach` | 夜藍 `#021A4D` -> 海藍 `#0277BD` -> 天藍 `#4FC3F7` 漸層底 + 淡天藍邊 + 天藍霓虹光暈 |
 
 門色看的是「目的地」路由：進入 `/beach` 是海灘色，從 `/beach` 回 `/home` 則是 neon 色。
 
@@ -121,9 +121,10 @@ src/
 
 ## 海灘世界（/beach）
 
-`src/views/BeachView.vue`：純氛圍頁面，沒有功能性內容——動態海灘背景 + 標題（BEACH / 海灘）+ 「返回主頁」按鈕（`router.push('/home')`，因此會播放雙開門轉場）。路由 `meta.theme` 為 `beach`，需登入。
+`src/views/BeachView.vue`：純氛圍頁面，沒有功能性內容——**賽博龐克海灘**：夜藍天空 + 合成波條紋太陽 + 發光霓虹海浪 + HUD 外框 + 故障標題（BEACH / 海灘）+ 「返回主頁」按鈕（`router.push('/home')`，因此會播放雙開門轉場）。路由 `meta.theme` 為 `beach`，需登入。
 
-- 配色：天藍 `#4FC3F7`、海藍 `#0288D1`、深藍 `#01579B`、淡天空 `#E1F5FE` + 白；沙色 `#F6E7C1` 只用在沙灘與太陽暈光的小面積點綴。token 定義在 `tailwind.css` 的 `@theme`：`--color-beach-sky` / `-sea` / `-deep` / `-mist` / `-sand`（utility 如 `bg-beach-sky`、`text-beach-deep`）；`WaveCanvas.vue` 裡的色碼需與這些 token 同步。字型沿用 Orbitron / Rajdhani，沒有新增字型。
-- `src/shared/components/BeachBackdrop.vue`：場景外層。天空漸層、太陽（光芒緩慢旋轉、暈光呼吸）、4 朵飄動的雲（只用 `transform` / `opacity`；關鍵影格 `cloud-drift`、`sun-rays`、`sun-glow` 在 `tailwind.css`），下半部放 `WaveCanvas`。
-- `src/shared/components/WaveCanvas.vue`：Canvas 2D 畫 6 層正弦海浪（遠深近淺、浪頭白線）、沙灘與來回漫過沙灘的浪花。效能 / 清理規則（沿用 `RainCanvas` 模式）：DPR 上限 2、約 30fps、`ResizeObserver`；分頁隱藏（`visibilitychange`）時取消 rAF、回到前景再恢復；`prefers-reduced-motion` 時只畫一張靜態畫面（也會即時響應系統設定變更）；卸載時取消 rAF、斷開 observer、移除所有 listener。
+- 風格：和首頁同一套賽博龐克語彙（霓虹發光、HUD 切角框、CRT 掃描線 + 掃過的亮帶、故障文字、合成波太陽、地平線光帶），但主色維持天藍 / 白，不使用首頁的紫 / 洋紅。重用首頁元件：`GlitchText`（標題；以 `--glitch-a` / `--glitch-b` 覆寫殘影顏色）、`NeonButton`（`beach` 變體）、`HudCard`（`beach` 變體，頂部三張狀態卡）、`bg-scanlines` / `animate-scan-bar` 等 utility；沒有直接用 `NeonBackdrop`（它綁定紫色天空 / 網格地板 / 數位雨），改由 `BeachBackdrop` 組裝同類圖層。
+- 配色：天藍 `#4FC3F7`、海藍 `#0288D1`、深藍 `#01579B`、夜藍 `#021A4D` / `#010B26`、淡天空 `#E1F5FE` + 白；沙色 `#F6E7C1` 只用在窄窄的沙灘（小面積點綴）。token 定義在 `tailwind.css` 的 `@theme`：`--color-beach-sky` / `-sea` / `-deep` / `-mist` / `-sand` / `-night` / `-abyss` / `-neon`、發光 `--text-shadow-beach-*` / `--shadow-beach-*`（utility 如 `text-beach-neon`、`shadow-beach-glow`、`text-shadow-beach-glow`），以及 `bg-beach-sun`（條紋太陽）；`WaveCanvas.vue` 裡的色碼需與這些 token 同步。字型只用 Orbitron / Rajdhani（`font-display` / `font-sans`），沒有新增字型。
+- `src/shared/components/BeachBackdrop.vue`：場景外層。天空漸層、星點（閃爍）、條紋太陽（暈光呼吸、下半沉進海面）、4 朵霓虹線框的雲（只用 `transform` / `opacity`；關鍵影格 `cloud-drift`、`sun-glow` 在 `tailwind.css`）、地平線光帶，下半部放 `WaveCanvas`，最上層是暈邊 + 掃描線 + 亮帶。`--sea` 變數是海面佔畫面高度的比例。
+- `src/shared/components/WaveCanvas.vue`：Canvas 2D 畫 6 層正弦海浪（深藍填色 + 發光的天藍 / 白浪頭線）、窄沙灘（含霓虹透視格線）與來回漫過沙灘的發光浪花。效能 / 清理規則（沿用 `RainCanvas` 模式）：DPR 上限 2、約 30fps、`ResizeObserver`；發光用「寬淡線 + 細亮線」疊畫而不是 `shadowBlur`；分頁隱藏（`visibilitychange`）時取消 rAF、回到前景再恢復；`prefers-reduced-motion` 時只畫一張靜態畫面（也會即時響應系統設定變更）；卸載時取消 rAF、斷開 observer、移除所有 listener。
 - 只改 `/beach`：`SpaceView`、`ForestView` 仍是 placeholder。
