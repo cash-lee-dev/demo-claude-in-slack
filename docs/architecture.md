@@ -31,7 +31,7 @@ src/
   main.js                          建立單一 Vue app：install router → await router.isReady() → mount；載入 tailwind.css 與所有門主題
   App.vue                          App 層級：<router-view :route="displayRoute"> + 全域 <DoorTransition>
   router/index.js                  路由表、meta、驗證守衛（beforeEach）
-  views/                           route view：LoginView、HomeView、BeachView、SpaceView、ForestView（後三者為「建構中」placeholder）
+  views/                           route view：LoginView、HomeView、BeachView（海灘，純氛圍頁）、SpaceView、ForestView（後兩者為「建構中」placeholder）
   components/
     DoorTransition.vue             雙開門 overlay（門板、接縫、CSS）
     HudCard.vue                    首頁的 HUD 卡片
@@ -39,7 +39,7 @@ src/
     useDoorTransition.js           轉場時間軸與「畫面路由 / URL 路由分離」機制
     useSession.js                  currentSession 與全域 session 監看（過期、跨分頁登出）
   styles/door-themes/<theme>.css   每個主題一個檔案，定義門的 CSS 變數（main.js 以 import.meta.glob 自動載入）
-  shared/                          auth.js、config.js、tailwind.css、共用元件（NeonBackdrop、NeonButton、WorldPlaceholder…）
+  shared/                          auth.js、config.js、tailwind.css、共用元件（NeonBackdrop、BeachBackdrop、WaveCanvas、NeonButton、WorldPlaceholder…）
 ```
 
 ### Router
@@ -89,7 +89,14 @@ src/
 | `--door-edge` | 門板內側邊框與中央接縫的顏色（color） |
 | `--door-glow` | 光暈顏色（color，建議帶透明度） |
 
-`src/styles/door-themes/neon.css` 是範例（同時掛在 `:root` 當預設值，尚未定義的主題會退回 neon 外觀）。
+目前的門主題（`src/styles/door-themes/`）：
+
+| 主題 | 檔案 | 使用的路由 | 門的配色 |
+| --- | --- | --- | --- |
+| `neon` | `neon.css` | `/login`、`/home` | 深藍紫底 + 青色邊 + 紫色光暈（同時掛在 `:root` 當預設值，尚未定義的主題 `space`、`forest` 會退回 neon 外觀） |
+| `beach` | `beach.css` | `/beach` | 天藍 `#4FC3F7` -> 海藍 `#0288D1` -> 深藍漸層底 + 白色邊 + 天藍光暈 |
+
+門色看的是「目的地」路由：進入 `/beach` 是海灘色，從 `/beach` 回 `/home` 則是 neon 色。
 
 ### 如何新增世界 / 主題
 
@@ -111,3 +118,12 @@ src/
 
 - `src/components/WorldOrb.vue`：圓形霓虹按鈕（沿用 NeonButton 的手感；`accent` 邊框發光色、`base` 球體底色、slot 放 SVG 圖形；`router-link` 導覽，aria-label 由呼叫端傳入）。掃光等參數複製自 NeonButton，調整時需同步。
 - `src/components/WorldOrbs.vue`：首頁的三個入口（海灘 `/beach`、宇宙 `/space`、森林 `/forest`），以 `worlds` 陣列（每個世界一個物件，含配色與內嵌 SVG 圖示）+ `v-for` 產生。
+
+## 海灘世界（/beach）
+
+`src/views/BeachView.vue`：純氛圍頁面，沒有功能性內容——動態海灘背景 + 標題（BEACH / 海灘）+ 「返回主頁」按鈕（`router.push('/home')`，因此會播放雙開門轉場）。路由 `meta.theme` 為 `beach`，需登入。
+
+- 配色：天藍 `#4FC3F7`、海藍 `#0288D1`、深藍 `#01579B`、淡天空 `#E1F5FE` + 白；沙色 `#F6E7C1` 只用在沙灘與太陽暈光的小面積點綴。token 定義在 `tailwind.css` 的 `@theme`：`--color-beach-sky` / `-sea` / `-deep` / `-mist` / `-sand`（utility 如 `bg-beach-sky`、`text-beach-deep`）；`WaveCanvas.vue` 裡的色碼需與這些 token 同步。字型沿用 Orbitron / Rajdhani，沒有新增字型。
+- `src/shared/components/BeachBackdrop.vue`：場景外層。天空漸層、太陽（光芒緩慢旋轉、暈光呼吸）、4 朵飄動的雲（只用 `transform` / `opacity`；關鍵影格 `cloud-drift`、`sun-rays`、`sun-glow` 在 `tailwind.css`），下半部放 `WaveCanvas`。
+- `src/shared/components/WaveCanvas.vue`：Canvas 2D 畫 6 層正弦海浪（遠深近淺、浪頭白線）、沙灘與來回漫過沙灘的浪花。效能 / 清理規則（沿用 `RainCanvas` 模式）：DPR 上限 2、約 30fps、`ResizeObserver`；分頁隱藏（`visibilitychange`）時取消 rAF、回到前景再恢復；`prefers-reduced-motion` 時只畫一張靜態畫面（也會即時響應系統設定變更）；卸載時取消 rAF、斷開 observer、移除所有 listener。
+- 只改 `/beach`：`SpaceView`、`ForestView` 仍是 placeholder。
