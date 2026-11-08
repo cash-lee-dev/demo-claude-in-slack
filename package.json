@@ -1,0 +1,23 @@
+{
+  "name": "demo-claude-in-slack",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cyberpunk neon Vue 3 multi-page app with frontend-only login",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "hash": "node scripts/hash.mjs"
+  },
+  "dependencies": {
+    "vue": "^3.5.45"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "vite": "^8.3.6"
+  }
+}
