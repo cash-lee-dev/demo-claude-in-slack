@@ -4,7 +4,7 @@
 
 - 純前端、無後端：帳密完全在瀏覽器內驗證（比對的是 hash，不是明文）
 - 技術：Vue 3 + vue-router + Vite + Tailwind CSS v4（執行期依賴只有 Vue 與 vue-router）
-- 視覺：霓虹藍紫主色、透視網格地板、數位雨、霓虹城市天際線、CRT 掃描線、故障文字、玻璃擬態登入卡、打字機副標；支援 `prefers-reduced-motion` 與手機版面
+- 視覺：霓虹藍紫主色（`/beach` 海灘世界是同風格的賽博龐克海灘，主色改為天藍 / 白）、透視網格地板、數位雨、霓虹城市天際線、CRT 掃描線、故障文字、玻璃擬態登入卡、打字機副標；支援 `prefers-reduced-motion` 與手機版面
 
 ## 快速開始
 
@@ -73,15 +73,15 @@ src/
   main.js                  單一 Vue app 入口
   App.vue                  <router-view> + 全域雙開門轉場
   router/index.js          路由表（含 meta.theme）與驗證守衛
-  views/                   LoginView / HomeView / BeachView / SpaceView / ForestView（世界頁目前是「建構中」placeholder）
+  views/                   LoginView / HomeView / BeachView（海灘，已實作）/ SpaceView / ForestView（placeholder「建構中」）
   components/              DoorTransition.vue（雙開門）、HudCard.vue
   composables/             useDoorTransition.js（轉場時間軸）、useSession.js（session 與監看）
-  styles/door-themes/      每個主題一個 CSS 檔，定義門的 --door-bg / --door-edge / --door-glow
+  styles/door-themes/      每個主題一個 CSS 檔（目前：neon、beach），定義門的 --door-bg / --door-edge / --door-glow
   shared/
     auth.js                雜湊、登入、session、storage 變更監聽
     config.js              讀取環境變數
     tailwind.css           Tailwind 入口：@theme（配色/字型/動畫 token）+ 少量無法用 utility 表達的具名小工具
-    components/            NeonBackdrop / RainCanvas / Skyline / GlitchText / Typewriter / NeonButton / WorldPlaceholder
+    components/            NeonBackdrop / RainCanvas / Skyline / BeachBackdrop / WaveCanvas / GlitchText / Typewriter / NeonButton / WorldPlaceholder
 ```
 
 路由使用 hash 模式（`/#/home`），GitHub Pages 重新整理任何路由都不會 404；頁面切換一律用 router（`router.push` / `router.replace`）。
@@ -90,7 +90,8 @@ src/
 | --- | --- | --- |
 | `/login` | 登入頁 | 否 |
 | `/home` | 首頁（`/` 與未知路徑都導向這裡，再由守衛判斷） | 是 |
-| `/beach` `/space` `/forest` | 世界頁（目前為 placeholder） | 是 |
+| `/beach` | 海灘世界：賽博龐克海灘（夜藍天空、條紋合成波太陽、霓虹雲、發光多層海浪、沙灘、HUD 外框、故障標題）+ 返回主頁；主題 `beach`（天藍霓虹的門） | 是 |
+| `/space` `/forest` | 世界頁（目前為 placeholder） | 是 |
 
 ### 雙開門轉場
 

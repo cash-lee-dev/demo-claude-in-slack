@@ -25,6 +25,7 @@ npm run hash -- <password>   # 以 hash key 產生密碼 hash
 - 路由：`src/router/index.js`（hash 模式）。每個路由都要有 `meta.theme`，需登入的加 `meta.requiresAuth: true`；導覽一律用 `router.push/replace`，不要用 `window.location`。
 - 守衛：`router.beforeEach` 使用 `src/shared/auth.js` 的 `getSession()`（auth 行為不可改）；未登入 -> `/login`、已登入造訪 `/login` -> `/home`、未知路徑 -> `/home`。session 過期（`exp` 計時）/ 跨分頁登出由 `useSessionWatcher`（`composables/useSession.js`）踢回 `/login`。
 - 轉場：`composables/useDoorTransition.js` 把「畫面路由（`displayRoute`）」與「URL 路由」分離，門合上時才切換畫面；進行中的導覽會排隊、不重疊；reduced-motion 改淡入淡出。
+- 世界與門主題：`/home`、`/login` 用 `neon`；`/beach` 已實作（賽博龐克海灘，主色天藍 / 白，重用 `GlitchText` / `NeonButton beach` / `HudCard beach`；`BeachView` + `shared/components/BeachBackdrop.vue` / `WaveCanvas.vue`，主題 `beach`，`door-themes/beach.css`，token 為 `tailwind.css` 的 `--color-beach-*`）；`/space`、`/forest` 仍是 `WorldPlaceholder`（門色退回 neon）。Canvas 元件須遵守：DPR 上限 2、分頁隱藏暫停、reduced-motion 靜態、卸載時清掉 rAF / listener。
 - 新增世界 / 主題：新增 `src/views/XxxView.vue`、在路由表加獨立一行（lazy import：`component: () => import('../views/XxxView.vue')`，`meta.theme: 'xxx'`）、新增 `src/styles/door-themes/xxx.css` 定義 `[data-theme='xxx']` 的 `--door-bg` / `--door-edge` / `--door-glow`（自動載入，不必改其他檔案）。詳見 @docs/architecture.md。
 
 ## 環境變數

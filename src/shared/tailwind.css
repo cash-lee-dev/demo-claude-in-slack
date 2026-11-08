@@ -24,6 +24,17 @@
   --color-fog: #e9e7ff;
   --color-dim: #8d88bd;
 
+  /* 海灘世界（/beach）：天藍 / 海藍 + 白，沙色只做小面積點綴。門的顏色見 styles/door-themes/beach.css */
+  --color-beach-sky: #4fc3f7;
+  --color-beach-sea: #0288d1;
+  --color-beach-deep: #01579b;
+  --color-beach-mist: #e1f5fe;
+  --color-beach-sand: #f6e7c1;
+  /* 賽博龐克海灘：夜藍底 + 霓虹天藍光（和首頁一樣的 HUD / 霓虹語彙，但維持藍白配色） */
+  --color-beach-night: #021a4d;
+  --color-beach-abyss: #010b26;
+  --color-beach-neon: #4fc3f7;
+
   /* 字型（Google Fonts 於 HTML 以 <link> 載入，失敗時退回系統字型） */
   --font-display: 'Orbitron', 'Eurostile', 'Bank Gothic', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Rajdhani', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -37,6 +48,9 @@
   --text-shadow-neon-green: 0 0 10px rgb(53 255 159 / 0.7);
   --text-shadow-neon-danger: 0 0 10px rgb(255 59 107 / 0.8);
   --text-shadow-neon-label: 0 0 8px rgb(123 97 255 / 0.7);
+  --text-shadow-beach-glow:
+    0 0 6px rgb(255 255 255 / 0.8), 0 0 18px #4fc3f7, 0 0 42px #0288d1, 0 0 80px #0288d1;
+  --text-shadow-beach-sm: 0 0 8px rgb(79 195 247 / 0.9), 0 0 22px rgb(2 136 209 / 0.7);
 
   --shadow-neon-violet: 0 0 18px rgb(123 97 255 / 0.5), inset 0 0 18px rgb(123 97 255 / 0.25);
   --shadow-neon-violet-lg:
@@ -48,6 +62,10 @@
     0 0 0 1px #00e5ff, 0 0 18px rgb(0 229 255 / 0.45), inset 0 0 14px rgb(0 229 255 / 0.12);
   --shadow-neon-card: inset 0 0 40px rgb(123 97 255 / 0.12);
   --shadow-neon-hud: inset 0 0 24px rgb(123 97 255 / 0.14);
+  --shadow-beach-glow: 0 0 18px rgb(79 195 247 / 0.5), inset 0 0 18px rgb(79 195 247 / 0.22);
+  --shadow-beach-glow-lg:
+    0 0 30px #4fc3f7, 0 0 60px rgb(2 136 209 / 0.6), inset 0 0 20px rgb(255 255 255 / 0.3);
+  --shadow-beach-hud: inset 0 0 24px rgb(79 195 247 / 0.14);
 }
 
 /* ===== 動畫（animate-*）：static 讓自訂 CSS 也能引用 ===== */
@@ -64,7 +82,21 @@
   --animate-spin-angle: spin-angle 6s linear infinite;
   --animate-load: load 0.9s ease-in-out infinite;
   --animate-glitch-skew: glitch-skew 4.2s infinite steps(1, end);
+  --animate-cloud-drift: cloud-drift 120s linear infinite;
+  --animate-sun-rays: sun-rays 90s linear infinite;
+  --animate-sun-glow: sun-glow 6s ease-in-out infinite;
 
+  /* 雲：以 --x（雲的起始 left）為基準從畫面左外漂到右外；reduced-motion 時動畫被關掉，雲停在 --x */
+  @keyframes cloud-drift {
+    from { transform: translateX(calc(-1 * var(--x, 0px) - 40vw)); }
+    to { transform: translateX(calc(100vw - var(--x, 0px))); }
+  }
+  @keyframes sun-rays {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes sun-glow {
+    50% { transform: scale(1.08); opacity: 0.85; }
+  }
   @keyframes flicker {
     0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
     20%, 24%, 55% { opacity: 0.45; }
@@ -170,11 +202,11 @@
     opacity: 0;
   }
   &::before {
-    color: var(--color-neon-cyan);
+    color: var(--glitch-a, var(--color-neon-cyan));
     animation: glitch-a var(--glitch-dur) infinite steps(1, end);
   }
   &::after {
-    color: var(--color-neon-magenta);
+    color: var(--glitch-b, var(--color-neon-magenta));
     animation: glitch-b var(--glitch-dur) infinite steps(1, end);
   }
   @media (prefers-reduced-motion: reduce) {
@@ -264,6 +296,27 @@
     #000 80% 86%,
     transparent 86% 92%,
     #000 92%
+  );
+  -webkit-mask-image: var(--stripes);
+  mask-image: var(--stripes);
+}
+
+/* 海灘世界的合成波太陽：白 -> 天藍 -> 海藍漸層 + 往下變粗的條紋遮罩（同 bg-neon-sun 的作法） */
+@utility bg-beach-sun {
+  background: linear-gradient(180deg, #ffffff 0%, #81d4fa 40%, #4fc3f7 70%, #0288d1 100%);
+  --stripes: linear-gradient(
+    180deg,
+    #000 0 34%,
+    transparent 34% 37%,
+    #000 37% 45%,
+    transparent 45% 50%,
+    #000 50% 58%,
+    transparent 58% 64%,
+    #000 64% 72%,
+    transparent 72% 79%,
+    #000 79% 86%,
+    transparent 86% 93%,
+    #000 93%
   );
   -webkit-mask-image: var(--stripes);
   mask-image: var(--stripes);

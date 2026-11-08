@@ -1,0 +1,10 @@
+/*
+ * 雙開門主題：beach（/beach）
+ * 格式同 neon.css：只定義三個門的變數，檔案會被 main.js 自動載入。
+ * 配色與 tailwind.css 的 --color-beach-* 一致：夜藍 #021A4D -> 海藍 #0288D1 -> 天藍 #4FC3F7（霓虹藍白）。
+ */
+[data-theme='beach'] {
+  --door-bg: linear-gradient(180deg, #021a4d 0%, #0277bd 62%, #4fc3f7 100%);
+  --door-edge: #81d4fa;
+  --door-glow: rgb(79 195 247 / 0.85);
+}
