@@ -64,7 +64,7 @@ src/
 - 未登入存取 `meta.requiresAuth` 的路由 -> `/login`（`/` 與未知路徑先 redirect 到 `/home`，再由守衛轉到 `/login`）。
 - 已登入造訪 `/login` -> `/home`。
 - 登出（`logout()` 清除 session 後 `router.replace('/login')`）-> `/login`。
-- `App.vue` 的 `useSessionWatcher`：每秒檢查 + 監聽 `storage`（`onSessionStorageChange`），session 過期或其他分頁登出時，若目前在需登入的路由就 `router.replace('/login')`。
+- `App.vue` 的 `useSessionWatcher`：以 `session.exp` 設定單次 `setTimeout` 偵測過期 + 監聽 `storage`（`onSessionStorageChange`）偵測其他分頁登出，若目前在需登入的路由就 `router.replace('/login')`。`currentSession` 只由守衛寫入。
 
 ### 雙開門轉場
 
@@ -74,9 +74,10 @@ src/
 
 1. router 照常、立即完成導覽（含守衛與上一頁 / 下一頁），`router.currentRoute` 馬上更新。
 2. `App.vue` 不直接顯示 `currentRoute`，而是 `<router-view :route="displayRoute">`；`displayRoute` 只在門板完全合上時才被設為最新的 `currentRoute`。
-3. 轉場進行中又發生導覽（快速連點、上一頁）時不會重疊也不會卡死：這一輪結束後若 `currentRoute` 與畫面不同，再播一輪直接到最新路由。
+3. 轉場進行中又發生導覽（快速連點、上一頁）時不會重疊也不會卡死：這一輪結束後若 `currentRoute.fullPath` 與畫面不同，再播一輪直接到最新路由。門色以「該輪開始時」的目的地為準（若期間又導覽到別的主題，下一輪才換色）。`finally` 會保證 overlay 一定被收起。
 4. overlay 全螢幕、`z-index: 9999`、轉場期間 `pointer-events: auto` 擋住指標輸入，底下內容同時 `inert`（鍵盤也無法操作）。
-5. `prefers-reduced-motion: reduce`：門板不滑動，改為整片約 0.3s 淡入、淡出（`tailwind.css` 的全域減少動態規則已排除 `.door-overlay`）。
+5. 無障礙：轉場結束（`inert` 解除）後把焦點移到新畫面的 `main`，並以 `aria-live` 區塊念出新頁面的 `meta.title`；首次載入不搶焦點。
+6. `prefers-reduced-motion: reduce`：門板不滑動，改為整片約 0.3s 淡入、淡出（`tailwind.css` 的全域減少動態規則已排除 `.door-overlay`）。
 
 ### 主題換色機制（門的顏色）
 
@@ -93,7 +94,7 @@ src/
 ### 如何新增世界 / 主題
 
 1. 新增 `src/views/XxxView.vue`（或取代對應 placeholder 的內容）。
-2. 在 `src/router/index.js` 的路由表新增一行，各世界各佔獨立一行：`{ path: '/xxx', name: 'xxx', component: XxxView, meta: { theme: 'xxx', requiresAuth: true, title: '...' } }`。
+2. 在 `src/router/index.js` 的路由表新增一行，各世界各佔獨立一行，世界 view 用 lazy import（不必改 import 區塊，並自動分 chunk；導覽會等 chunk 載入完才完成，之後才播門）：`{ path: '/xxx', name: 'xxx', component: () => import('../views/XxxView.vue'), meta: { theme: 'xxx', requiresAuth: true, title: '...' } }`。
 3. 新增 `src/styles/door-themes/xxx.css`：
 
 ```css

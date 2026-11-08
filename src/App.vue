@@ -1,7 +1,7 @@
 <script setup>
 import router from './router/index.js'
 import DoorTransition from './components/DoorTransition.vue'
-import { doorState, useRouteDoorTransition } from './composables/useDoorTransition.js'
+import { doorState, routeAnnouncement, useRouteDoorTransition } from './composables/useDoorTransition.js'
 import { useSessionWatcher } from './composables/useSession.js'
 
 // 畫面顯示的路由與 URL 路由分離：門合上時才切換（見 useDoorTransition.js）
@@ -15,4 +15,6 @@ useSessionWatcher(router)
     <router-view :route="displayRoute" />
   </div>
   <DoorTransition />
+  <!-- 螢幕閱讀器：換畫面後念出新頁面標題 -->
+  <div class="sr-only" role="status" aria-live="polite">{{ routeAnnouncement }}</div>
 </template>

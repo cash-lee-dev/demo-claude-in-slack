@@ -23,6 +23,11 @@ const { active, closed, theme, duration } = doorState
 </template>
 
 <style>
+/* 轉場結束後程式把焦點移到 main（見 useDoorTransition.js），不顯示焦點框 */
+main[tabindex='-1']:focus {
+  outline: none;
+}
+
 .door-overlay {
   position: fixed;
   inset: 0;

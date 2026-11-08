@@ -11,7 +11,10 @@ import { currentSession } from '../composables/useSession.js'
 
 const router = useRouter()
 // 守衛已確認有效 session；這裡取當下快照（之後登出不會讓這個畫面壞掉）
-const session = currentSession.value
+// 防呆：畫面在守衛通過後約 0.6s 才掛載，這段空窗內 session 可能已過期 / 被登出；
+// 此時給一份空的暫代資料並導回 /login，避免 setup 丟 TypeError
+const session = currentSession.value ?? { u: '', role: '', iat: Date.now(), exp: Date.now() }
+if (!currentSession.value) router.replace('/login')
 
 function onLogout() {
   logout()

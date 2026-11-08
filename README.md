@@ -99,7 +99,7 @@ src/
 ### 新增世界 / 主題
 
 1. 新增 `src/views/XxxView.vue`；
-2. 在 `src/router/index.js` 加一行路由，`meta: { theme: 'xxx', requiresAuth: true }`；
+2. 在 `src/router/index.js` 加一行路由（lazy import），`meta: { theme: 'xxx', requiresAuth: true }`；
 3. 新增 `src/styles/door-themes/xxx.css`，在 `[data-theme='xxx']` 內定義三個門的變數（`main.js` 會自動載入該資料夾所有 CSS）。
 
 ## 部署（GitHub Pages）
