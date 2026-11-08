@@ -6,6 +6,7 @@ import GlitchText from '../shared/components/GlitchText.vue'
 import Typewriter from '../shared/components/Typewriter.vue'
 import NeonButton from '../shared/components/NeonButton.vue'
 import HudCard from '../components/HudCard.vue'
+import WorldOrbs from '../components/WorldOrbs.vue'
 import { logout } from '../shared/auth.js'
 import { currentSession } from '../composables/useSession.js'
 
@@ -90,6 +91,7 @@ onBeforeUnmount(() => {
         <span class="mr-[0.4em] text-neon-magenta">&gt;</span>
         <Typewriter :lines="['the grid never sleeps.', 'all systems nominal. jack in deeper.', '這裡是你的世界。']" />
       </p>
+      <WorldOrbs class="mt-4" />
     </main>
 
     <section class="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4" aria-label="System status">
