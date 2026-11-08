@@ -35,8 +35,6 @@ src/
   components/
     DoorTransition.vue             雙開門 overlay（門板、接縫、CSS）
     HudCard.vue                    首頁的 HUD 卡片
-    WorldOrb.vue                   圓形霓虹按鈕（沿用 NeonButton 手感；accent / deep 色 + slot 圖示；router-link 導覽）
-    WorldOrbs.vue                  首頁的三個世界入口（海灘 /beach、宇宙 /space、森林 /forest），各帶主題色與內嵌 SVG 圖示
   composables/
     useDoorTransition.js           轉場時間軸與「畫面路由 / URL 路由分離」機制
     useSession.js                  currentSession 與全域 session 監看（過期、跨分頁登出）
@@ -108,3 +106,8 @@ src/
 ```
 
 不需要修改 `main.js`、`DoorTransition.vue` 或 vite 設定。
+
+## 首頁世界入口
+
+- `src/components/WorldOrb.vue`：圓形霓虹按鈕（沿用 NeonButton 的手感；`accent` 邊框發光色、`base` 球體底色、slot 放 SVG 圖形；`router-link` 導覽，aria-label 由呼叫端傳入）。掃光等參數複製自 NeonButton，調整時需同步。
+- `src/components/WorldOrbs.vue`：首頁的三個入口（海灘 `/beach`、宇宙 `/space`、森林 `/forest`），以 `worlds` 陣列（每個世界一個物件，含配色與內嵌 SVG 圖示）+ `v-for` 產生。
