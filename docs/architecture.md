@@ -106,3 +106,8 @@ src/
 ```
 
 不需要修改 `main.js`、`DoorTransition.vue` 或 vite 設定。
+
+## 首頁世界入口
+
+- `src/components/WorldOrb.vue`：圓形霓虹按鈕（沿用 NeonButton 的手感；`accent` 邊框發光色、`base` 球體底色、slot 放 SVG 圖形；`router-link` 導覽，aria-label 由呼叫端傳入）。掃光等參數複製自 NeonButton，調整時需同步。
+- `src/components/WorldOrbs.vue`：首頁的三個入口（海灘 `/beach`、宇宙 `/space`、森林 `/forest`），以 `worlds` 陣列（每個世界一個物件，含配色與內嵌 SVG 圖示）+ `v-for` 產生。
