@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build (dummy env, no secrets)
+        run: npm run build
+        env:
+          VITE_AUTH_HASH_KEY: ci-dummy-hash-key
+          VITE_ADMIN_USERNAME: ci-admin
+          VITE_ADMIN_PASSWORD: ci-dummy-password
+
+      - name: Check MPA entry points exist
+        run: test -f dist/index.html && test -f dist/home.html
