@@ -10,9 +10,15 @@
   --forest-night: #0b2a0f; /* 夜林綠：天空 / 門底 */
   --forest-abyss: #06180a; /* 最深：近景樹影 / 暈邊 */
   --forest-cream: #f5ebd0; /* 中性奶油：文字、月亮、螢火 */
+  --forest-light: #9ccc65; /* 淺草綠：故障殘影、部分落葉 */
+  --forest-pale: #aed581; /* 淡草綠：門邊框、霧、月暈 */
+  --forest-moss: #2e7d32; /* 苔綠：故障殘影 */
   --forest-glow: rgb(124 179 66 / 0.8);
   --forest-shadow-glow: 0 0 18px rgb(124 179 66 / 0.5), inset 0 0 18px rgb(124 179 66 / 0.18);
   --forest-shadow-glow-lg: 0 0 30px #7cb342, 0 0 60px rgb(27 94 32 / 0.7), inset 0 0 20px rgb(245 235 208 / 0.25);
+  /* 被 clip-path 裁切的元素（切角按鈕）只用內發光，外發光改用 drop-shadow */
+  --forest-shadow-inset: inset 0 0 18px rgb(124 179 66 / 0.22);
+  --forest-shadow-inset-lg: inset 0 0 20px rgb(245 235 208 / 0.3);
   --forest-text-glow: 0 0 10px rgb(124 179 66 / 0.85), 0 0 28px rgb(124 179 66 / 0.45), 0 2px 12px rgb(6 24 10 / 0.9);
   --forest-text-shadow-sm: 0 0 8px rgb(6 24 10 / 0.95), 0 1px 3px rgb(6 24 10 / 0.9);
 }
@@ -62,5 +68,10 @@
   .forest-mist,
   .forest-moon-glow {
     animation: none;
+    will-change: auto;
+  }
+  /* 動畫停掉後會回到預設 opacity:1（比動畫時 0.55~1 更厚），這裡取中間值讓靜態畫面的霧不要過亮 */
+  .forest-mist {
+    opacity: 0.75;
   }
 }

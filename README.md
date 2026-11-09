@@ -81,7 +81,7 @@ src/
     auth.js                雜湊、登入、session、storage 變更監聽
     config.js              讀取環境變數
     tailwind.css           Tailwind 入口：@theme（配色/字型/動畫 token）+ 少量無法用 utility 表達的具名小工具
-    components/            NeonBackdrop / RainCanvas / Skyline / BeachBackdrop / WaveCanvas / SpaceBackdrop / StarCanvas / ForestBackdrop / ForestCanvas / GlitchText / Typewriter / NeonButton / WorldPlaceholder
+    components/            NeonBackdrop / RainCanvas / Skyline / BeachBackdrop / WaveCanvas / SpaceBackdrop / StarCanvas / ForestBackdrop / ForestCanvas / GlitchText / Typewriter / NeonButton / WorldPlaceholder（目前沒有路由使用，保留作新世界的起手模板）
 ```
 
 路由使用 hash 模式（`/#/home`），GitHub Pages 重新整理任何路由都不會 404；頁面切換一律用 router（`router.push` / `router.replace`）。

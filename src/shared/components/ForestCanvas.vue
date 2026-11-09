@@ -136,17 +136,22 @@ function draw(t) {
 function resize() {
   const c = canvas.value
   if (!c) return
-  dpr = Math.min(window.devicePixelRatio || 1, 2)
-  w = c.clientWidth
-  h = c.clientHeight
+  const nd = Math.min(window.devicePixelRatio || 1, 2)
+  const nw = c.clientWidth
+  const nh = c.clientHeight
+  // ResizeObserver 掛上時會先觸發一次、行動裝置網址列收合也會頻繁觸發：尺寸沒變就不要重設 canvas（重設會清空畫面）
+  if (ctx && nd === dpr && nw === w && nh === h) return
+  dpr = nd
+  w = nw
+  h = nh
   c.width = Math.floor(w * dpr)
   c.height = Math.floor(h * dpr)
   ctx = c.getContext('2d')
   const n = w < 640 ? MOBILE : DESKTOP
   nLeaves = n.leaves
   nFlies = n.flies
-  // 動畫中下一幀就會重畫；靜態模式（或暫停中）需要立刻補畫，否則 canvas 被清空會一片空白
-  if (reduce || !raf) draw(reduce ? STATIC_T : performance.now())
+  // canvas 被清空後立刻補畫一幀（不等下一個 33ms 節流 frame），避免縮放時閃一下空白
+  draw(reduce ? STATIC_T : performance.now())
 }
 
 function loop(t) {

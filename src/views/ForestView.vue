@@ -1,8 +1,7 @@
 <script setup>
 // 森林世界：純氛圍頁面（賽博龐克森林背景 + HUD 外框 + 故障標題 + 返回主頁），沒有功能性內容。
-// 背景見 ForestBackdrop / ForestCanvas；token 在 src/styles/forest.css。
+// 背景見 ForestBackdrop / ForestCanvas；token 在 src/styles/forest.css（由 ForestBackdrop import，這裡不重複 import）。
 // 返回按鈕在這裡以 scoped class 自行上色（不在共用 NeonButton / HudCard 加森林變體）。
-import '../styles/forest.css'
 import { useRouter } from 'vue-router'
 import ForestBackdrop from '../shared/components/ForestBackdrop.vue'
 import GlitchText from '../shared/components/GlitchText.vue'
@@ -31,13 +30,16 @@ const router = useRouter()
 
     <main class="forest-main flex flex-col items-center justify-end gap-3 pt-4 text-center sm:gap-4">
       <h1 class="m-0 animate-float font-display text-[clamp(3rem,13vw,8rem)] leading-[1.02] font-black tracking-[0.04em]">
-        <GlitchText class="forest-title animate-glitch-skew [--glitch-a:#9ccc65] [--glitch-b:#2e7d32]" text="FOREST" />
+        <GlitchText class="forest-title animate-glitch-skew [--glitch-a:var(--forest-light)] [--glitch-b:var(--forest-moss)]" text="FOREST" />
       </h1>
       <p class="forest-sub m-0 font-display text-[clamp(1rem,3vw,1.5rem)] font-bold tracking-[0.5em] indent-[0.5em]">森林</p>
       <p class="forest-line m-0 font-sans text-[clamp(0.95rem,2vw,1.2rem)] font-semibold tracking-[0.14em]">
-        <span class="forest-prompt mr-[0.4em]">&gt;</span>the canopy is listening.
+        <span class="forest-prompt mr-[0.4em]" aria-hidden="true">&gt;</span>the canopy is listening.
       </p>
-      <button type="button" class="forest-btn chamfer mt-3" @click="router.push('/home')">返回主頁</button>
+      <!-- chamfer 的 clip-path 會裁掉外發光，所以光暈用外層 wrapper 的 drop-shadow，按鈕本身只留內發光 -->
+      <div class="forest-btn-wrap mt-3">
+        <button type="button" class="forest-btn chamfer" @click="router.push('/home')">返回主頁</button>
+      </div>
     </main>
   </div>
 </template>
@@ -85,6 +87,13 @@ const router = useRouter()
   color: var(--forest-bright);
 }
 
+.forest-btn-wrap {
+  filter: drop-shadow(0 0 8px rgb(124 179 66 / 0.55));
+  transition: filter 0.2s;
+}
+.forest-btn-wrap:hover {
+  filter: drop-shadow(0 0 14px var(--forest-bright));
+}
 .forest-btn {
   position: relative;
   overflow: hidden;
@@ -102,7 +111,7 @@ const router = useRouter()
   letter-spacing: 0.28em;
   text-indent: 0.28em;
   text-transform: uppercase;
-  box-shadow: var(--forest-shadow-glow);
+  box-shadow: var(--forest-shadow-inset);
   transition:
     transform 0.2s,
     background 0.2s,
@@ -119,7 +128,7 @@ const router = useRouter()
 .forest-btn:hover {
   transform: translateY(-1px);
   background: linear-gradient(135deg, var(--forest-bright), var(--forest-deep));
-  box-shadow: var(--forest-shadow-glow-lg);
+  box-shadow: var(--forest-shadow-inset-lg);
 }
 .forest-btn:hover::before {
   transform: translateX(120%);
@@ -129,7 +138,8 @@ const router = useRouter()
   filter: brightness(1.2);
 }
 .forest-btn:focus-visible {
+  /* chamfer 的 clip-path 會裁掉外側，所以 focus 框畫在按鈕內側（-8px 才不會被切角吃掉） */
   outline: 2px solid var(--forest-cream);
-  outline-offset: 3px;
+  outline-offset: -8px;
 }
 </style>

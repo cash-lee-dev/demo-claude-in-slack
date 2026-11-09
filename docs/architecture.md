@@ -39,7 +39,7 @@ src/
     useDoorTransition.js           轉場時間軸與「畫面路由 / URL 路由分離」機制
     useSession.js                  currentSession 與全域 session 監看（過期、跨分頁登出）
   styles/door-themes/<theme>.css   每個主題一個檔案，定義門的 CSS 變數（main.js 以 import.meta.glob 自動載入）
-  shared/                          auth.js、config.js、tailwind.css、共用元件（NeonBackdrop、BeachBackdrop、WaveCanvas、SpaceBackdrop、StarCanvas、ForestBackdrop、ForestCanvas、NeonButton、WorldPlaceholder…）
+  shared/                          auth.js、config.js、tailwind.css、共用元件（NeonBackdrop、BeachBackdrop、WaveCanvas、SpaceBackdrop、StarCanvas、ForestBackdrop、ForestCanvas、NeonButton、WorldPlaceholder（目前沒有路由使用，保留作新世界的起手模板）…）
 ```
 
 ### Router
@@ -98,11 +98,11 @@ src/
 | `space` | `space.css` | `/space` | 黑 `#05020A` -> 暗紅 `#2A050C` -> 深紅 `#B71C1C` 漸層底 + 霓虹紅 `#FF1744` 邊與光暈 |
 | `forest` | `forest.css` | `/forest` | 夜林綠 `#0B2A0F` -> 深草綠 `#1B5E20` -> 亮草綠 `#7CB342` 漸層底 + 淡草綠邊 `#AED581` + 草綠霓虹光暈 |
 
-門色看的是「目的地」路由：進入 `/beach` 是海灘色，從 `/beach` 回 `/home` 則是 neon 色（`/space` 同理）。
+門色看的是「目的地」路由：進入 `/beach` 是海灘色，從 `/beach` 回 `/home` 則是 neon 色（`/space`、`/forest` 同理）。
 
 ### 如何新增世界 / 主題
 
-1. 新增 `src/views/XxxView.vue`（或取代對應 placeholder 的內容）。
+1. 新增 `src/views/XxxView.vue`（可複製 `WorldPlaceholder` 當起手模板）。
 2. 在 `src/router/index.js` 的路由表新增一行，各世界各佔獨立一行，世界 view 用 lazy import（不必改 import 區塊，並自動分 chunk；導覽會等 chunk 載入完才完成，之後才播門）：`{ path: '/xxx', name: 'xxx', component: () => import('../views/XxxView.vue'), meta: { theme: 'xxx', requiresAuth: true, title: '...' } }`。
 3. 新增 `src/styles/door-themes/xxx.css`：
 
@@ -146,7 +146,7 @@ src/
 
 - 風格：和首頁 / 海灘同一套賽博龐克語彙（霓虹發光、HUD 角標、CRT 掃描線 + 掃過的亮帶、故障文字），主色為草綠，不使用首頁的紫 / 洋紅。重用 `GlitchText`（以 `--glitch-a` / `--glitch-b` 覆寫殘影顏色為草綠）與 `bg-scanlines` / `animate-scan-bar` / `animate-float` 等 utility；**沒有**在共用的 `NeonButton` / `HudCard` 加森林變體，返回按鈕以 `ForestView` 內的 scoped class + `--forest-*` 變數自行上色。
 - 配色：亮草綠 `#7CB342`、深草綠 `#1B5E20`、夜林綠 `#0B2A0F`、最深 `#06180A`；文字為中性奶油色 `#F5EBD0`（月亮、螢火蟲也用奶油色）。字型只用 Orbitron / Rajdhani（`font-display` / `font-sans`），沒有新增字型。
-- Token：定義在獨立的 `src/styles/forest.css`（純 CSS 變數與 keyframes，**不改 `tailwind.css`**，避免與其他世界衝突）：`--forest-bright` / `-deep` / `-night` / `-abyss` / `-cream`、`--forest-glow`、`--forest-shadow-glow(-lg)`、`--forest-text-glow`、`--forest-text-shadow-sm`，以及 `forest-sway` / `forest-mist` / `forest-moon` 關鍵影格。`[data-theme]` 只掛在門 overlay 上，所以 token 放在 `:root`，由 `ForestView` / `ForestBackdrop` import；`ForestCanvas.vue` 裡的色碼需與這些 token 同步。門顏色另在 `door-themes/forest.css`。
+- Token：定義在獨立的 `src/styles/forest.css`（純 CSS 變數與 keyframes，**不改 `tailwind.css`**，避免與其他世界衝突）：`--forest-bright` / `-deep` / `-night` / `-abyss` / `-cream` / `-light` / `-pale` / `-moss`、`--forest-glow`、`--forest-shadow-glow(-lg)` / `--forest-shadow-inset(-lg)`、`--forest-text-glow`、`--forest-text-shadow-sm`，以及 `forest-sway` / `forest-mist` / `forest-moon` 關鍵影格。`[data-theme]` 只掛在門 overlay 上，所以 token 放在 `:root`，由 `ForestView` / `ForestBackdrop` import；`ForestBackdrop` / `ForestView` 以 `var(--forest-*)` 引用 token（只有樹影漸層、地平線亮色等單一用途色碼寫在元件內）；`ForestCanvas.vue` 的色碼與 `door-themes/forest.css`（`main.js` 全域載入，不能依賴只在進入 /forest 才載入的 `forest.css`）是寫死的，改 token 時需同步。
 - `src/shared/components/ForestBackdrop.vue`：場景外層。夜空漸層、月亮（暈光呼吸）、3 層松樹剪影（遠 / 中 / 近，越近越深越高；inline SVG，由固定公式產生，以 `transform` 緩慢左右搖曳、各層週期與相位不同）、兩條緩慢飄移的霧，中間夾 `ForestCanvas`，最上層是暈邊 + 掃描線 + 亮帶。
 - `src/shared/components/ForestCanvas.vue`：Canvas 2D 畫落葉（正弦左右擺動 + 自轉 + 翻面）與螢火蟲（慢速漂移、閃爍、柔光）。粒子總數桌機 48（落葉 20 + 螢火蟲 28）、手機（寬 < 640px）20，不超過 50；位置全由固定公式決定（不用 `Math.random`），所以靜態畫面穩定；標題區域的粒子會調暗以維持可讀性。
 - 效能 / 清理規則（沿用 `WaveCanvas` 模式）：DPR 上限 2、約 30fps、`ResizeObserver`；發光用預先畫好的柔光 sprite + `drawImage`（不用 `shadowBlur`）；分頁隱藏（`visibilitychange`）時取消 rAF、回到前景再恢復；`prefers-reduced-motion` 時只畫一張靜態畫面（也會即時響應系統設定變更），CSS 的搖曳 / 霧 / 月亮動畫同時停掉；卸載時取消 rAF、斷開 observer、移除所有 listener。
