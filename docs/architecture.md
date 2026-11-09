@@ -13,7 +13,8 @@ NEON//GRID 是一個賽博龐克霓虹風格的前端示範專案：整個系統
 
 | 項目 | 技術 | 說明 |
 | --- | --- | --- |
-| UI 框架 | Vue 3（單檔元件、`<script setup>`） | 僅此一個執行期依賴 |
+| UI 框架 | Vue 3（單檔元件、`<script setup>`） | 核心執行期依賴（另有 `vue-router`、`vue-i18n`） |
+| 多語系 | `vue-i18n`（Composition 模式） | 支援 `zh-TW` / `en`，字串放在 `src/locales/`，見「多語系（i18n）」 |
 | 建置工具 | Vite + `@vitejs/plugin-vue` | 開發伺服器與打包 |
 | 樣式 | Tailwind CSS v4（`tailwindcss` + `@tailwindcss/vite`） | 主題 token（配色、字型、動畫）定義在 `@theme`，以 utility class 撰寫樣式 |
 | 頁面模式 | SPA（單頁應用）+ `vue-router`（hash 模式） | 單一 `index.html` 入口與單一 Vue app，頁面是 `<router-view>` 內的 route view |
@@ -29,12 +30,15 @@ NEON//GRID 是一個賽博龐克霓虹風格的前端示範專案：整個系統
 index.html                         唯一的 HTML 入口，載入 /src/main.js
 src/
   main.js                          建立單一 Vue app：install router → await router.isReady() → mount；載入 tailwind.css 與所有門主題
-  App.vue                          App 層級：<router-view :route="displayRoute"> + 全域 <DoorTransition>
+  App.vue                          App 層級：<router-view :route="displayRoute">（包在 :inert 容器內）+ 全域 <DoorTransition> + 全域 <LocaleSwitcher>（在 :inert 之外）
   router/index.js                  路由表、meta、驗證守衛（beforeEach）
   views/                           route view：LoginView、HomeView、BeachView（海灘，純氛圍頁）、SpaceView（宇宙，純氛圍頁）、ForestView（森林，純氛圍頁）
   components/
     DoorTransition.vue             雙開門 overlay（門板、接縫、CSS）
     HudCard.vue                    首頁的 HUD 卡片
+    LocaleSwitcher.vue             全域語系切換器（EN | 中）
+  i18n/index.js                    vue-i18n 實例、語系偵測 / 持久化、setLocale、跨分頁同步
+  locales/                         zh-TW.js、en.js（所有翻譯字串，key 結構必須一致）
   composables/
     useDoorTransition.js           轉場時間軸與「畫面路由 / URL 路由分離」機制
     useSession.js                  currentSession 與全域 session 監看（過期、跨分頁登出）
@@ -45,7 +49,7 @@ src/
 ### Router
 
 - `createWebHashHistory(import.meta.env.BASE_URL)`：網址為 `/#/home` 形式，GitHub Pages 重新整理任何路由都不會 404；Vite base 不變（build / preview 為 `/demo-claude-in-slack/`，dev 為 `/`）。
-- 路由表（每個路由都有 `meta.theme`，需登入的有 `meta.requiresAuth`）：
+- 路由表（每個路由都有 `meta.theme` 與 `meta.title`（i18n key），需登入的有 `meta.requiresAuth`）：
 
 | 路徑 | View | `meta.theme` | 需登入 |
 | --- | --- | --- | --- |
@@ -76,7 +80,7 @@ src/
 2. `App.vue` 不直接顯示 `currentRoute`，而是 `<router-view :route="displayRoute">`；`displayRoute` 只在門板完全合上時才被設為最新的 `currentRoute`。
 3. 轉場進行中又發生導覽（快速連點、上一頁）時不會重疊也不會卡死：這一輪結束後若 `currentRoute.fullPath` 與畫面不同，再播一輪直接到最新路由。門色以「該輪開始時」的目的地為準（若期間又導覽到別的主題，下一輪才換色）。`finally` 會保證 overlay 一定被收起。
 4. overlay 全螢幕、`z-index: 9999`、轉場期間 `pointer-events: auto` 擋住指標輸入，底下內容同時 `inert`（鍵盤也無法操作）。
-5. 無障礙：轉場結束（`inert` 解除）後把焦點移到新畫面的 `main`，並以 `aria-live` 區塊念出新頁面的 `meta.title`；首次載入不搶焦點。
+5. 無障礙：轉場結束（`inert` 解除）後把焦點移到新畫面的 `main`，並以 `aria-live` 區塊念出新頁面的標題（`meta.title` 翻譯後的文字）；首次載入不搶焦點。語系切換器在 `:inert` 之外，轉場期間仍可操作（見「多語系（i18n）」）。
 6. `prefers-reduced-motion: reduce`：門板不滑動，改為整片約 0.3s 淡入、淡出（`tailwind.css` 的全域減少動態規則已排除 `.door-overlay`）。
 
 ### 主題換色機制（門的顏色）
@@ -103,7 +107,7 @@ src/
 ### 如何新增世界 / 主題
 
 1. 新增 `src/views/XxxView.vue`（可複製 `WorldPlaceholder` 當起手模板）。
-2. 在 `src/router/index.js` 的路由表新增一行，各世界各佔獨立一行，世界 view 用 lazy import（不必改 import 區塊，並自動分 chunk；導覽會等 chunk 載入完才完成，之後才播門）：`{ path: '/xxx', name: 'xxx', component: () => import('../views/XxxView.vue'), meta: { theme: 'xxx', requiresAuth: true, title: '...' } }`。
+2. 在 `src/router/index.js` 的路由表新增一行，各世界各佔獨立一行，世界 view 用 lazy import（不必改 import 區塊，並自動分 chunk；導覽會等 chunk 載入完才完成，之後才播門）：`{ path: '/xxx', name: 'xxx', component: () => import('../views/XxxView.vue'), meta: { theme: 'xxx', requiresAuth: true, title: 'routes.xxx.title' } }`，並在 `src/locales/zh-TW.js` 與 `en.js` 補上 `routes.xxx.title`。
 3. 新增 `src/styles/door-themes/xxx.css`：
 
 ```css
@@ -115,6 +119,62 @@ src/
 ```
 
 不需要修改 `main.js`、`DoorTransition.vue` 或 vite 設定。
+
+## 多語系（i18n）
+
+使用 `vue-i18n`（Composition 模式，`legacy: false`），只支援 **`zh-TW`（繁體中文）** 與 **`en`**；`fallbackLocale` 為 `en`。
+
+### 檔案位置
+
+| 檔案 | 內容 |
+| --- | --- |
+| `src/locales/zh-TW.js`、`src/locales/en.js` | 所有翻譯字串（巢狀物件，兩個檔案的 key 結構必須完全一致） |
+| `src/i18n/index.js` | `createI18n` 實例、`SUPPORTED_LOCALES`、語系偵測與持久化、`setLocale()`、`t()`（元件外使用）、`onLocaleStorageChange()`（跨分頁同步） |
+| `src/components/LocaleSwitcher.vue` | 全域切換器 |
+| `src/main.js` | `app.use(i18n)` |
+
+Key 命名：`meta.*`（描述）、`routes.<name>.title`（頁籤標題）、`switcher.*`、`login.*`（登入頁；之後各頁用自己的前綴，例如 `home.*`）。
+
+### 偵測與持久化
+
+1. 首次造訪（`localStorage` 沒有 `neon.locale.v1`）：`navigator.language` 以 `zh` 開頭 -> `zh-TW`，否則 `en`。
+2. 使用者手動切換時才寫入 `localStorage` 的 **`neon.locale.v1`**（值為 `zh-TW` 或 `en`）；之後儲存值優先於瀏覽器語言。無效的儲存值視為沒有。
+3. `localStorage` 的讀寫一律包 `try/catch`；不可用時（隱私模式等）app 仍可運作，只是無法記住選擇。
+4. 跨分頁同步：`App.vue` 掛載後監聽 `storage` 事件，**只處理 `key === 'neon.locale.v1'`**，其他 key（尤其是 auth 的 `neon.session.v1`，否則會干擾登入狀態）與 `clear()`（key 為 `null`）都忽略；同步進來的切換不再回寫。
+
+### 切換器（`LocaleSwitcher.vue`）
+
+- 固定在畫面右下角（`position: fixed`，並避開 safe-area），緊湊的霓虹風 `EN | 中` 兩段式切換；所有頁面（login、home、beach、space、forest）都看得到。
+- 放在 `App.vue` 的 `:inert` 包裝**之外**，`z-index: 10000`（高於 `DoorTransition` 的 9999）：雙開門轉場期間仍浮在門之上，可點擊、可用鍵盤操作（切換語系不會中斷轉場、不改路由、不影響 session）。
+- 無障礙：外層 `role="group"` + 翻譯後的 `aria-label`；兩個 `<button>` 各自有原生語言名稱的 `aria-label`（`English` / `繁體中文`，不隨語系翻譯）與 `aria-pressed`，並以 `lang` 標示；可用 Tab / Enter / Space 操作；觸控裝置的點擊區放大到 44px；沒有切換動畫（只有顏色 transition，`prefers-reduced-motion` 由全域規則處理）。
+- 切換時即時生效、不重新載入頁面。
+
+### 文件層級
+
+- `<html lang>`：隨語系即時更新為 `zh-TW` 或 `en`（`i18n/index.js` 的 `watch`）；`<meta name="description">` 同步。
+- `document.title`：路由的 `meta.title` 是 i18n key；`useDoorTransition.js` 的 `show()`（門合上、真正切換畫面時）翻譯後設定標題，語系切換時也會立刻以目前**畫面**的路由重設標題（轉場中途切換時，標題仍屬於目前顯示的畫面，轉場完成後才換成目的地的標題）。aria-live 的頁面宣告只在換頁時更新，切換語系不會重念。
+- `index.html` 的 `<title>`、meta description、`<html lang="en">`、`<noscript>` 是 JS 載入前（或停用 JS）的預設值，維持英文 / 雙語，JS 啟動後會被覆寫。
+
+### 如何新增字串
+
+1. 在 `src/locales/zh-TW.js` **與** `src/locales/en.js` 加上相同的 key。
+2. 元件內：`const { t } = useI18n()`，template 用 `{{ t('login.title') }}`、屬性用 `:aria-label="t('...')"`；元件外（router、composable）用 `import { t } from '../i18n/index.js'`。
+3. 不要把翻譯後的文字存進 ref（會在切換語系時卡在舊語言）；改存 key 或用 `computed`（例如 `LoginView` 的 `errorKey`、`typewriterLines`）。
+4. 訊息語法中 `{ } @ | $` 有特殊意義，要顯示這些字元請用 `{'@'}` 跳脫。
+5. 品牌 / 賽博龐克用語（`NEON//GRID`、`NEON GRID`、`SEC-NODE`、`HMAC-SHA256` 等）可保留英文。
+6. 英文語系不放中文（不要再寫「USERNAME 使用者名稱」這種雙語字串）。
+
+### 如何新增語言
+
+1. 新增 `src/locales/<code>.js`（複製 `en.js` 後翻譯，key 完全一致）。
+2. 在 `src/i18n/index.js`：`import` 它、加進 `messages` 與 `SUPPORTED_LOCALES`，並視需要調整 `browserLocale()` 的偵測規則。
+3. 在 `LocaleSwitcher.vue` 的 `options` 加一個選項（`code`、顯示文字、原生語言名稱 `label`、`lang`），並補上 `switcher.*` 字串（若需要）。
+4. 更新本節與 `CLAUDE.md`。
+
+### 目前的翻譯範圍
+
+- 已翻譯：頁籤標題（所有路由）、`<html lang>`、LoginView 的所有可見文字、錯誤訊息、Typewriter 台詞與 aria 文字。
+- 尚未翻譯（CTCC-12）：首頁與海灘 / 宇宙 / 森林世界頁的內文。
 
 ## 首頁世界入口
 
