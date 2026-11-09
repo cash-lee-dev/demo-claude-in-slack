@@ -3,7 +3,8 @@
 賽博龐克霓虹風格的 **Vue 3 單頁應用（SPA，vue-router hash 模式）**：整個系統需要登入，登入頁驗證通過後進入首頁，首頁顯示巨大的故障風霓虹標題 **"This is Your World!"**；所有頁面切換都有「雙開門」轉場。
 
 - 純前端、無後端：帳密完全在瀏覽器內驗證（比對的是 hash，不是明文）
-- 技術：Vue 3 + vue-router + Vite + Tailwind CSS v4（執行期依賴只有 Vue 與 vue-router）
+- 技術：Vue 3 + vue-router + vue-i18n + Vite + Tailwind CSS v4（執行期依賴為 Vue、vue-router 與 vue-i18n）
+- 多語系：支援 `zh-TW` / `en`，首次依瀏覽器語言決定，右下角切換器可隨時切換並記住選擇；字串放在 `src/locales/`（詳見 `docs/architecture.md`）
 - 視覺：霓虹藍紫主色（`/beach` 海灘世界是同風格的賽博龐克海灘，主色改為天藍 / 白；`/space` 宇宙世界主色改為黑 / 紅）、透視網格地板、數位雨、霓虹城市天際線、CRT 掃描線、故障文字、玻璃擬態登入卡、打字機副標；支援 `prefers-reduced-motion` 與手機版面
 
 ## 快速開始
