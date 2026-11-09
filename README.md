@@ -73,15 +73,15 @@ src/
   main.js                  單一 Vue app 入口
   App.vue                  <router-view> + 全域雙開門轉場
   router/index.js          路由表（含 meta.theme）與驗證守衛
-  views/                   LoginView / HomeView / BeachView（海灘，已實作）/ SpaceView（宇宙，已實作）/ ForestView（placeholder「建構中」）
+  views/                   LoginView / HomeView / BeachView（海灘，已實作）/ SpaceView（宇宙，已實作）/ ForestView（森林，已實作）
   components/              DoorTransition.vue（雙開門）、HudCard.vue
   composables/             useDoorTransition.js（轉場時間軸）、useSession.js（session 與監看）
-  styles/door-themes/      每個主題一個 CSS 檔（目前：neon、beach、space），定義門的 --door-bg / --door-edge / --door-glow
+  styles/door-themes/      每個主題一個 CSS 檔（目前：neon、beach、space、forest），定義門的 --door-bg / --door-edge / --door-glow
   shared/
     auth.js                雜湊、登入、session、storage 變更監聽
     config.js              讀取環境變數
     tailwind.css           Tailwind 入口：@theme（配色/字型/動畫 token）+ 少量無法用 utility 表達的具名小工具
-    components/            NeonBackdrop / RainCanvas / Skyline / BeachBackdrop / WaveCanvas / SpaceBackdrop / StarCanvas / GlitchText / Typewriter / NeonButton / WorldPlaceholder
+    components/            NeonBackdrop / RainCanvas / Skyline / BeachBackdrop / WaveCanvas / SpaceBackdrop / StarCanvas / ForestBackdrop / ForestCanvas / GlitchText / Typewriter / NeonButton / WorldPlaceholder
 ```
 
 路由使用 hash 模式（`/#/home`），GitHub Pages 重新整理任何路由都不會 404；頁面切換一律用 router（`router.push` / `router.replace`）。
@@ -92,7 +92,7 @@ src/
 | `/home` | 首頁（`/` 與未知路徑都導向這裡，再由守衛判斷） | 是 |
 | `/beach` | 海灘世界：賽博龐克海灘（夜藍天空、條紋合成波太陽、霓虹雲、發光多層海浪、沙灘、HUD 外框、故障標題）+ 返回主頁；主題 `beach`（天藍霓虹的門） | 是 |
 | `/space` | 宇宙世界：賽博龐克深空（黑底、紅色星雲光暈、閃爍星空與流星、底部暗紅星球弧線、HUD 外框、故障標題 SPACE / 宇宙）+ 返回主頁；主題 `space`（黑紅霓虹的門） | 是 |
-| `/forest` | 世界頁（目前為 placeholder） | 是 |
+| `/forest` | 森林世界：賽博龐克森林（深綠夜空與月亮、多層樹木剪影、落葉、螢火蟲、HUD 外框、故障標題）+ 返回主頁；主題 `forest`（草綠的門） | 是 |
 
 ### 雙開門轉場
 

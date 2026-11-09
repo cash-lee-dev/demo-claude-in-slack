@@ -1,0 +1,10 @@
+/*
+ * 雙開門主題：forest（/forest）
+ * 格式同 neon.css：只定義三個門的變數，檔案會被 main.js 自動載入。
+ * 配色與 src/styles/forest.css 的 --forest-* 一致：深林綠 #0B2A0F -> 草綠 #1B5E20 -> 亮草綠 #7CB342。
+ */
+[data-theme='forest'] {
+  --door-bg: linear-gradient(180deg, #0b2a0f 0%, #1b5e20 62%, #7cb342 100%);
+  --door-edge: #aed581;
+  --door-glow: rgb(124 179 66 / 0.8);
+}
