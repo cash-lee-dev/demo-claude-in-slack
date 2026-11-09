@@ -1,0 +1,77 @@
+/*
+ * 森林世界（/forest）的主題 token 與關鍵影格。
+ * 只放純 CSS 變數 / keyframes，刻意不改 tailwind.css（避免與其他世界 ticket 衝突）。
+ * 由 ForestView / ForestBackdrop import；[data-theme] 只掛在門 overlay 上，所以 token 放在 :root。
+ * ForestCanvas.vue 裡的色碼需與這些 token 同步。
+ */
+:root {
+  --forest-bright: #7cb342; /* 亮草綠：霓虹主色 */
+  --forest-deep: #1b5e20; /* 深草綠 */
+  --forest-night: #0b2a0f; /* 夜林綠：天空 / 門底 */
+  --forest-abyss: #06180a; /* 最深：近景樹影 / 暈邊 */
+  --forest-cream: #f5ebd0; /* 中性奶油：文字、月亮、螢火 */
+  --forest-light: #9ccc65; /* 淺草綠：故障殘影、部分落葉 */
+  --forest-pale: #aed581; /* 淡草綠：門邊框、霧、月暈 */
+  --forest-moss: #2e7d32; /* 苔綠：故障殘影 */
+  --forest-glow: rgb(124 179 66 / 0.8);
+  --forest-shadow-glow: 0 0 18px rgb(124 179 66 / 0.5), inset 0 0 18px rgb(124 179 66 / 0.18);
+  --forest-shadow-glow-lg: 0 0 30px #7cb342, 0 0 60px rgb(27 94 32 / 0.7), inset 0 0 20px rgb(245 235 208 / 0.25);
+  /* 被 clip-path 裁切的元素（切角按鈕）只用內發光，外發光改用 drop-shadow */
+  --forest-shadow-inset: inset 0 0 18px rgb(124 179 66 / 0.22);
+  --forest-shadow-inset-lg: inset 0 0 20px rgb(245 235 208 / 0.3);
+  --forest-text-glow: 0 0 10px rgb(124 179 66 / 0.85), 0 0 28px rgb(124 179 66 / 0.45), 0 2px 12px rgb(6 24 10 / 0.9);
+  --forest-text-shadow-sm: 0 0 8px rgb(6 24 10 / 0.95), 0 1px 3px rgb(6 24 10 / 0.9);
+}
+
+/* 樹影 / 霧：只用 transform / opacity。reduced-motion 時動畫被關掉，停在原位 */
+@keyframes forest-sway {
+  0%,
+  100% {
+    transform: translate3d(-1.2%, 0, 0);
+  }
+  50% {
+    transform: translate3d(1.2%, 0, 0);
+  }
+}
+@keyframes forest-mist {
+  0%,
+  100% {
+    transform: translate3d(-12%, 0, 0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(12%, 0, 0);
+    opacity: 1;
+  }
+}
+@keyframes forest-moon {
+  50% {
+    transform: scale(1.07);
+    opacity: 0.8;
+  }
+}
+
+.forest-sway {
+  animation: forest-sway var(--forest-dur, 30s) ease-in-out infinite;
+  will-change: transform;
+}
+.forest-mist {
+  animation: forest-mist var(--forest-dur, 40s) ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.forest-moon-glow {
+  animation: forest-moon 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forest-sway,
+  .forest-mist,
+  .forest-moon-glow {
+    animation: none;
+    will-change: auto;
+  }
+  /* 動畫停掉後會回到預設 opacity:1（比動畫時 0.55~1 更厚），這裡取中間值讓靜態畫面的霧不要過亮 */
+  .forest-mist {
+    opacity: 0.75;
+  }
+}
