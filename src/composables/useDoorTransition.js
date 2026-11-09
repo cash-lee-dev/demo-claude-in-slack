@@ -1,4 +1,5 @@
-import { nextTick, onScopeDispose, ref, shallowRef } from 'vue'
+import { nextTick, onScopeDispose, ref, shallowRef, watch } from 'vue'
+import { locale, t } from '../i18n/index.js'
 
 /** 時間軸（毫秒）：關門 -> 停留（此時切換路由元件）-> 開門，總長約 1.4s */
 export const DOOR_TIMING = { close: 600, hold: 200, open: 600 }
@@ -52,13 +53,20 @@ export function useRouteDoorTransition(router) {
   const displayRoute = shallowRef(router.currentRoute.value)
   let playing = false
 
+  // meta.title 是 i18n key；翻譯後設定頁籤標題
   function show(route) {
     displayRoute.value = route
     if (route.meta.title) {
-      document.title = route.meta.title
-      routeAnnouncement.value = route.meta.title
+      const title = t(route.meta.title)
+      document.title = title
+      routeAnnouncement.value = title
     }
   }
+  // 切換語系時立即更新目前畫面的頁籤標題（不更新 aria-live 宣告，避免切語言時重念頁名）
+  watch(locale, () => {
+    const key = displayRoute.value.meta.title
+    if (key) document.title = t(key)
+  })
 
   // 轉場結束後把焦點移到新畫面的 main（inert 已解除），讓鍵盤 / 螢幕閱讀器使用者知道換了畫面
   async function focusNewView() {
