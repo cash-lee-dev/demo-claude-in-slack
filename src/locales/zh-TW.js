@@ -14,8 +14,6 @@ export default {
   },
   switcher: {
     group: '語言',
-    en: 'English',
-    zh: '繁體中文',
   },
   login: {
     title: '存取終端',

@@ -12,7 +12,7 @@ NEON//GRID：賽博龐克霓虹風格的 Vue 3 + Vite + Tailwind CSS 單頁應�
 ## 常用指令
 
 ```bash
-npm ci               # 安裝依賴（Node 20+）
+npm ci               # 安裝依賴（Node 20+；vue-i18n 宣告 node>=22，Node 20 上只會出現 EBADENGINE 警告，刻意接受）
 npm run dev          # 開發伺服器（base 為 /）
 npm run build        # 打包到 dist/（base 預設 /demo-claude-in-slack/）
 npm run preview      # 預覽打包結果

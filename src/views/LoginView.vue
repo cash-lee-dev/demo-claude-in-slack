@@ -9,7 +9,7 @@ import NeonButton from '../shared/components/NeonButton.vue'
 import { login, isAuthConfigured } from '../shared/auth.js'
 
 const router = useRouter()
-const { t, locale } = useI18n()
+const { t, tm, rt, locale } = useI18n()
 
 const username = ref('')
 const password = ref('')
@@ -28,8 +28,11 @@ const inputCls =
   'w-full rounded-sm border border-neon-violet/45 bg-[rgb(5_4_22/0.7)] px-3.5 py-[13px] font-mono text-[1.05rem] tracking-[0.06em] text-white caret-neon-cyan outline-none transition duration-200 placeholder:text-dim hover:not-disabled:border-neon-violet focus:border-neon-cyan focus:bg-[rgb(8_6_34/0.85)] focus:shadow-neon-focus disabled:opacity-60 autofill:shadow-[inset_0_0_0_100px_#0a0828] autofill:[-webkit-text-fill-color:#fff]'
 const labelCls = 'font-display text-[0.72rem] tracking-[0.25em] text-neon-violet text-shadow-neon-label'
 
-// Typewriter 的台詞（隨語系變化）
-const typewriterLines = computed(() => [0, 1, 2, 3].map((i) => t(`login.typewriter[${i}]`)))
+// Typewriter 的台詞（隨語系變化）：以語系檔陣列的實際長度為準，增減台詞只需改語系檔；空陣列時退回空字串避免 Typewriter 取到 undefined
+const typewriterLines = computed(() => {
+  const lines = tm('login.typewriter').map((m) => rt(m))
+  return lines.length ? lines : ['']
+})
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 

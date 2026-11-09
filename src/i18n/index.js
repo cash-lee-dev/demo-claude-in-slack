@@ -74,12 +74,12 @@ watch(locale, syncDocument, { immediate: true, flush: 'sync' })
 
 /**
  * 跨分頁同步（選配）：其他分頁手動切換後，這個分頁跟著切。
- * 只處理 neon.locale.v1；其他 key（例如 auth 的 neon.session.v1）與 clear()（key 為 null）一律忽略。
+ * 只處理 localStorage 的 neon.locale.v1；其他 key（含 sessionStorage 的事件）（例如 auth 的 neon.session.v1）與 clear()（key 為 null）一律忽略。
  * 回傳取消監聽的函式。
  */
 export function onLocaleStorageChange() {
   const handler = (e) => {
-    if (e.key !== LOCALE_STORAGE_KEY) return
+    if (e.key !== LOCALE_STORAGE_KEY || e.storageArea !== localStorage) return
     if (isSupported(e.newValue)) setLocale(e.newValue, { persist: false })
   }
   window.addEventListener('storage', handler)

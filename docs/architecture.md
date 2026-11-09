@@ -22,7 +22,7 @@ NEON//GRID 是一個賽博龐克霓虹風格的前端示範專案：整個系統
 | 設定 | Vite 環境變數（`VITE_*`） | hash key、管理員帳號與密碼 hash 皆由環境變數提供 |
 | 視覺特效 | CSS 動畫與 Canvas 2D | 不使用額外的動畫或圖形套件 |
 | 部署 | GitHub Pages + GitHub Actions | push 到 `main` 時自動建置並部署；建置用的環境變數來自 GitHub Environment `Prod` |
-| 執行環境 | Node.js 20 以上、npm | |
+| 執行環境 | Node.js 20 以上、npm | `vue-i18n` / `@intlify/*` 在自己的 `engines` 宣告 `node >= 22`；專案**刻意維持 Node 20**（`package.json` engines、CI / deploy workflow 都是 20，由專案擁有者決定）。Node 20 上 `npm ci` 只會印出 `EBADENGINE` 警告，不會失敗，建置與執行都正常 |
 
 ## SPA 結構
 
@@ -137,10 +137,10 @@ Key 命名：`meta.*`（描述）、`routes.<name>.title`（頁籤標題）、`s
 
 ### 偵測與持久化
 
-1. 首次造訪（`localStorage` 沒有 `neon.locale.v1`）：`navigator.language` 以 `zh` 開頭 -> `zh-TW`，否則 `en`。
+1. 首次造訪（`localStorage` 沒有 `neon.locale.v1`）：`navigator.language`（只看這個，不看 `navigator.languages`）以 `zh` 開頭 -> `zh-TW`，否則 `en`；因此 `zh-CN`、`zh-HK` 等目前都會是 `zh-TW`（尚未提供簡體）。
 2. 使用者手動切換時才寫入 `localStorage` 的 **`neon.locale.v1`**（值為 `zh-TW` 或 `en`）；之後儲存值優先於瀏覽器語言。無效的儲存值視為沒有。
 3. `localStorage` 的讀寫一律包 `try/catch`；不可用時（隱私模式等）app 仍可運作，只是無法記住選擇。
-4. 跨分頁同步：`App.vue` 掛載後監聽 `storage` 事件，**只處理 `key === 'neon.locale.v1'`**，其他 key（尤其是 auth 的 `neon.session.v1`，否則會干擾登入狀態）與 `clear()`（key 為 `null`）都忽略；同步進來的切換不再回寫。
+4. 跨分頁同步：`App.vue` 掛載後監聽 `storage` 事件，**只處理 `localStorage` 的 `key === 'neon.locale.v1'`**，其他 key（尤其是 auth 的 `neon.session.v1`，否則會干擾登入狀態）與 `clear()`（key 為 `null`）都忽略；同步進來的切換不再回寫。
 
 ### 切換器（`LocaleSwitcher.vue`）
 
@@ -152,23 +152,24 @@ Key 命名：`meta.*`（描述）、`routes.<name>.title`（頁籤標題）、`s
 ### 文件層級
 
 - `<html lang>`：隨語系即時更新為 `zh-TW` 或 `en`（`i18n/index.js` 的 `watch`）；`<meta name="description">` 同步。
-- `document.title`：路由的 `meta.title` 是 i18n key；`useDoorTransition.js` 的 `show()`（門合上、真正切換畫面時）翻譯後設定標題，語系切換時也會立刻以目前**畫面**的路由重設標題（轉場中途切換時，標題仍屬於目前顯示的畫面，轉場完成後才換成目的地的標題）。aria-live 的頁面宣告只在換頁時更新，切換語系不會重念。
+- `document.title`：路由的 `meta.title` 是 i18n key；`useDoorTransition.js` 的 `show()`（門合上、真正切換畫面時）翻譯後設定標題，語系切換時也會立刻以目前**畫面**的路由重設標題（轉場中途切換時，標題仍屬於目前顯示的畫面，轉場完成後才換成目的地的標題）。轉場結束後程式會把焦點移到新畫面的 `main`，但若焦點正在語系切換器上則不搶焦點。aria-live 的頁面宣告只在換頁時更新，切換語系不會重念。
 - `index.html` 的 `<title>`、meta description、`<html lang="en">`、`<noscript>` 是 JS 載入前（或停用 JS）的預設值，維持英文 / 雙語，JS 啟動後會被覆寫。
 
 ### 如何新增字串
 
 1. 在 `src/locales/zh-TW.js` **與** `src/locales/en.js` 加上相同的 key。
 2. 元件內：`const { t } = useI18n()`，template 用 `{{ t('login.title') }}`、屬性用 `:aria-label="t('...')"`；元件外（router、composable）用 `import { t } from '../i18n/index.js'`。
-3. 不要把翻譯後的文字存進 ref（會在切換語系時卡在舊語言）；改存 key 或用 `computed`（例如 `LoginView` 的 `errorKey`、`typewriterLines`）。
-4. 訊息語法中 `{ } @ | $` 有特殊意義，要顯示這些字元請用 `{'@'}` 跳脫。
-5. 品牌 / 賽博龐克用語（`NEON//GRID`、`NEON GRID`、`SEC-NODE`、`HMAC-SHA256` 等）可保留英文。
-6. 英文語系不放中文（不要再寫「USERNAME 使用者名稱」這種雙語字串）。
+3. 陣列型字串（例如 `login.typewriter`）以 `tm()` + `rt()` 取得，長度以語系檔為準，增減台詞只需改語系檔（建議兩個語系筆數一致）。
+4. 不要把翻譯後的文字存進 ref（會在切換語系時卡在舊語言）；改存 key 或用 `computed`（例如 `LoginView` 的 `errorKey`、`typewriterLines`）。
+5. 訊息語法中 `{ } @ | $` 有特殊意義，要顯示這些字元請用 `{'@'}` 跳脫。
+6. 品牌 / 賽博龐克用語（`NEON//GRID`、`NEON GRID`、`SEC-NODE`、`HMAC-SHA256` 等）可保留英文。
+7. 英文語系不放中文（不要再寫「USERNAME 使用者名稱」這種雙語字串）。
 
 ### 如何新增語言
 
 1. 新增 `src/locales/<code>.js`（複製 `en.js` 後翻譯，key 完全一致）。
 2. 在 `src/i18n/index.js`：`import` 它、加進 `messages` 與 `SUPPORTED_LOCALES`，並視需要調整 `browserLocale()` 的偵測規則。
-3. 在 `LocaleSwitcher.vue` 的 `options` 加一個選項（`code`、顯示文字、原生語言名稱 `label`、`lang`），並補上 `switcher.*` 字串（若需要）。
+3. 在 `LocaleSwitcher.vue` 的 `options` 加一個選項（`code`、顯示文字、原生語言名稱 `label`、`lang`）。切換器的顯示文字與 aria-label（`EN` / `中` / `English` / `繁體中文`）是寫在元件裡的**原生語言名稱**，不放進語系檔、也不隨目前語系翻譯；這是「英文模式不出現中文」的刻意例外（檢查殘留中文時要排除切換器）。只有群組標籤 `switcher.group` 走 i18n。
 4. 更新本節與 `CLAUDE.md`。
 
 ### 目前的翻譯範圍

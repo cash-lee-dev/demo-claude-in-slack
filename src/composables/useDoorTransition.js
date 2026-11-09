@@ -73,6 +73,8 @@ export function useRouteDoorTransition(router) {
     await nextTick()
     const el = document.querySelector('#app main')
     if (!el) return
+    // 使用者正在操作語系切換器（它在 inert 之外，轉場中也能聚焦）時不搶焦點
+    if (document.activeElement?.closest('.locale-switcher')) return
     if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1')
     el.focus({ preventScroll: true })
   }

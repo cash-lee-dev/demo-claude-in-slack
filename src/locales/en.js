@@ -14,8 +14,6 @@ export default {
   },
   switcher: {
     group: 'Language',
-    en: 'English',
-    zh: '繁體中文',
   },
   login: {
     title: 'ACCESS TERMINAL',
