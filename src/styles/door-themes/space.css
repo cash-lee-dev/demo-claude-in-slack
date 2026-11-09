@@ -1,0 +1,10 @@
+/*
+ * 雙開門主題：space（/space）
+ * 格式同 neon.css：只定義三個門的變數，檔案會被 main.js 自動載入。
+ * 配色與 tailwind.css 的 --color-space-* 一致：黑 #05020A -> 暗紅 -> 深紅 #B71C1C，邊與光暈為霓虹紅 #FF1744。
+ */
+[data-theme='space'] {
+  --door-bg: linear-gradient(180deg, #05020a 0%, #2a050c 58%, #b71c1c 100%);
+  --door-edge: #ff1744;
+  --door-glow: rgb(255 23 68 / 0.85);
+}

@@ -35,6 +35,14 @@
   --color-beach-abyss: #010b26;
   --color-beach-neon: #4fc3f7;
 
+  /* 宇宙世界（/space）：黑底 + 紅色霓虹（#FF1744 / #B71C1C）。門的顏色見 styles/door-themes/space.css */
+  --color-space-void: #05020a;
+  --color-space-deep: #12040c;
+  --color-space-neon: #ff1744;
+  --color-space-crimson: #b71c1c;
+  --color-space-ember: #ff5252;
+  --color-space-mist: #ffe5e9;
+
   /* 字型（Google Fonts 於 HTML 以 <link> 載入，失敗時退回系統字型） */
   --font-display: 'Orbitron', 'Eurostile', 'Bank Gothic', 'Segoe UI', system-ui, sans-serif;
   --font-sans: 'Rajdhani', 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -51,6 +59,9 @@
   --text-shadow-beach-glow:
     0 0 6px rgb(255 255 255 / 0.8), 0 0 18px #4fc3f7, 0 0 42px #0288d1, 0 0 80px #0288d1;
   --text-shadow-beach-sm: 0 0 8px rgb(79 195 247 / 0.9), 0 0 22px rgb(2 136 209 / 0.7);
+  --text-shadow-space-glow:
+    0 0 6px rgb(255 255 255 / 0.8), 0 0 18px #ff1744, 0 0 42px #b71c1c, 0 0 80px #b71c1c;
+  --text-shadow-space-sm: 0 0 8px rgb(255 23 68 / 0.9), 0 0 22px rgb(183 28 28 / 0.7);
 
   --shadow-neon-violet: 0 0 18px rgb(123 97 255 / 0.5), inset 0 0 18px rgb(123 97 255 / 0.25);
   --shadow-neon-violet-lg:
@@ -66,6 +77,10 @@
   --shadow-beach-glow-lg:
     0 0 30px #4fc3f7, 0 0 60px rgb(2 136 209 / 0.6), inset 0 0 20px rgb(255 255 255 / 0.3);
   --shadow-beach-hud: inset 0 0 24px rgb(79 195 247 / 0.14);
+  --shadow-space-glow: 0 0 18px rgb(255 23 68 / 0.5), inset 0 0 18px rgb(255 23 68 / 0.22);
+  --shadow-space-glow-lg:
+    0 0 30px #ff1744, 0 0 60px rgb(183 28 28 / 0.6), inset 0 0 20px rgb(255 255 255 / 0.3);
+  --shadow-space-hud: inset 0 0 24px rgb(255 23 68 / 0.14);
 }
 
 /* ===== 動畫（animate-*）：static 讓自訂 CSS 也能引用 ===== */
@@ -85,6 +100,8 @@
   --animate-cloud-drift: cloud-drift 120s linear infinite;
   --animate-sun-rays: sun-rays 90s linear infinite;
   --animate-sun-glow: sun-glow 6s ease-in-out infinite;
+  --animate-nebula-drift: nebula-drift 46s ease-in-out infinite alternate;
+  --animate-planet-glow: planet-glow 7s ease-in-out infinite;
 
   /* 雲：以 --x（雲的起始 left）為基準從畫面左外漂到右外；reduced-motion 時動畫被關掉，雲停在 --x */
   @keyframes cloud-drift {
@@ -96,6 +113,14 @@
   }
   @keyframes sun-glow {
     50% { transform: scale(1.08); opacity: 0.85; }
+  }
+  /* 星雲：只用 transform / opacity 緩慢飄移與呼吸 */
+  @keyframes nebula-drift {
+    from { transform: translate3d(-3%, 1%, 0) scale(1); opacity: 0.75; }
+    to { transform: translate3d(3%, -2%, 0) scale(1.14); opacity: 1; }
+  }
+  @keyframes planet-glow {
+    50% { opacity: 0.6; }
   }
   @keyframes flicker {
     0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
