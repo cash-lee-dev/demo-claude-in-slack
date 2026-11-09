@@ -131,10 +131,10 @@ src/
 
 ## 宇宙世界（/space）
 
-`src/views/SpaceView.vue`：純氛圍頁面，沒有功能性內容——**賽博龐克宇宙**：黑色深空 + 紅色星雲光暈 + 閃爍星空與流星 + 底部暗紅星球弧線 + HUD 外框 + 故障標題（SPACE / 宇宙）+ 「返回主頁」按鈕（`router.push('/home')`，因此會播放雙開門轉場）。路由 `meta.theme` 為 `space`，需登入。結構完全比照 `/beach`。
+`src/views/SpaceView.vue`：純氛圍頁面，沒有功能性內容——**賽博龐克宇宙**：黑色深空 + 紅色星雲光暈 + 閃爍星空與流星 + 底部暗紅星球弧線 + HUD 外框 + 故障標題（SPACE / 宇宙）+ 「返回主頁」按鈕（`router.push('/home')`，因此會播放雙開門轉場）。路由 `meta.theme` 為 `space`，需登入。結構完全比照 `/beach`。無障礙：DOM 順序是 `main`（h1 + 返回按鈕）在前，純裝飾的假資料狀態卡與 HUD 角標都是 `aria-hidden`，視覺上用 grid 的 `row-start` 維持卡片在標題上方。`NeonButton space` 的 focus 外框是紅色，hover 背景改為深紅（`#B71C1C` -> `#8E1212`）以維持白字對比。
 
 - 風格：同一套賽博龐克語彙（霓虹發光、HUD 切角框、CRT 掃描線 + 掃過的亮帶、故障文字），主色為黑 + 紅，不使用首頁的紫 / 洋紅。重用 `GlitchText`（`--glitch-a` / `--glitch-b` 覆寫為紅色殘影）、`NeonButton`（`space` 變體）、`HudCard`（`space` 變體：邊框、標題、四角標與 hover 邊框都是紅色；頂部三張狀態卡 SECTOR / ORBIT / SIGNAL）。
-- 配色：霓虹紅 `#FF1744`、深紅 `#B71C1C`、黑 `#05020A`。token 在 `tailwind.css` 的 `@theme`：`--color-space-void` / `-deep` / `-neon` / `-crimson` / `-ember` / `-mist`、發光 `--text-shadow-space-*` / `--shadow-space-*`（utility 如 `text-space-neon`、`shadow-space-glow`、`text-shadow-space-glow`）；`StarCanvas.vue` 裡的色碼需與這些 token 同步。字型只用 Orbitron / Rajdhani。
+- 配色：霓虹紅 `#FF1744`、深紅 `#B71C1C`、黑 `#05020A`。token 在 `tailwind.css` 的 `@theme`：`--color-space-void` / `-deep` / `-neon` / `-crimson` / `-ember` / `-mist`、發光 `--text-shadow-space-*` / `--shadow-space-*`（utility 如 `text-space-neon`、`shadow-space-glow`、`text-shadow-space-glow`）；`--color-space-deep` 用在 `HudCard space` 的卡片底色；`StarCanvas.vue` 裡的色碼需與這些 token 同步。字型只用 Orbitron / Rajdhani。
 - `src/shared/components/SpaceBackdrop.vue`：場景外層。黑底 + 兩層紅色星雲（徑向漸層，只用 `transform` / `opacity` 緩慢飄移，關鍵影格 `nebula-drift`）、`StarCanvas`、底部超大圓只露出上緣的暗紅星球弧線（邊緣亮線 + 大氣光暈呼吸，關鍵影格 `planet-glow`），最上層是暈邊 + 掃描線 + 亮帶。
-- `src/shared/components/StarCanvas.vue`：Canvas 2D 畫閃爍的星空（固定種子的亂數，位置每次一致；星數依畫面面積決定，上限 260；白 / 淡紅 / 霓虹紅三種色調）與偶爾劃過的紅白流星（同時最多 3 顆）。效能 / 清理規則同 `WaveCanvas`：DPR 上限 2、約 30fps、`ResizeObserver`；分頁隱藏時取消 rAF、回到前景再恢復（dt 歸零避免流星瞬移）；`prefers-reduced-motion` 時只畫一張靜態畫面（含一顆凍結的流星，也會即時響應設定變更）；卸載時取消 rAF、斷開 observer、移除所有 listener。
+- `src/shared/components/StarCanvas.vue`：Canvas 2D 畫閃爍的星空（固定種子的亂數，位置每次一致；星數依畫面面積決定，上限 260；四種色調：白 `#ffffff`、淡紅 `#ffd2d9`（不是 token，只用在星點）、`--color-space-ember` `#ff5252`、`--color-space-neon` `#ff1744`）與偶爾劃過的紅白流星（同時最多 3 顆）。效能 / 清理規則同 `WaveCanvas`：DPR 上限 2、約 30fps、`ResizeObserver`；分頁隱藏時取消 rAF、回到前景再恢復（dt 歸零避免流星瞬移）；`prefers-reduced-motion` 時只畫一張靜態畫面（含一顆凍結的流星，也會即時響應設定變更）；卸載時取消 rAF、斷開 observer、移除所有 listener。
 - 只改 `/beach`、`/space`：`ForestView` 仍是 placeholder。

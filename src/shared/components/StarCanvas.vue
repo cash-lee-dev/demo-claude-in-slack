@@ -171,6 +171,7 @@ function stop() {
   cancelAnimationFrame(raf)
   raf = 0
   prev = 0 // 恢復時第一幀 dt 歸零，流星不會瞬移
+  nextAt = 0 // 恢復後重新計時，不會一回到分頁就立刻冒出流星
 }
 function onVisibility() {
   document.hidden ? stop() : start()

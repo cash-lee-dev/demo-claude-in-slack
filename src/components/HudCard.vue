@@ -16,7 +16,7 @@ const cornerRed = 'before:border-space-neon before:drop-shadow-[0_0_4px_var(--co
     :class="[
       space ? cornerRed : cornerCyan,
       space
-        ? 'border-space-neon/40 bg-[rgb(18_4_12/0.6)] shadow-space-hud'
+        ? 'border-space-neon/40 bg-space-deep/60 shadow-space-hud'
         : beach
           ? 'border-beach-neon/40 bg-[rgb(1_11_38/0.6)] shadow-beach-hud'
           : 'border-neon-violet/35 bg-[rgb(10_8_40/0.62)] shadow-neon-hud',
