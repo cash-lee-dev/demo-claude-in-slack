@@ -1,0 +1,59 @@
+---
+/**
+ * 全站共用版型：head（含 View Transitions）、持久化的星空 / 游標層、導覽列、屏容器、屏數點、頁尾。
+ * 三個頁面（/、/solutions/、/contact/）都只負責在 <slot /> 放 <Screen>。
+ */
+import { ClientRouter } from 'astro:transitions';
+import '../styles/index.css';
+import Starfield from '../components/Starfield.astro';
+import FxLayer from '../components/FxLayer.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import ScreenDots from '../components/ScreenDots.astro';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, url } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description = SITE_DESCRIPTION } = Astro.props;
+const fullTitle = title ? `${title}｜${SITE_NAME}` : `${SITE_NAME}｜${SITE_TAGLINE}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#030712" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content="zh_TW" />
+    <ClientRouter fallback="swap" />
+    <script is:inline data-astro-rerun>
+      document.documentElement.classList.add('js');
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要內容</a>
+    <Starfield />
+    <FxLayer />
+    <div class="warp-ring" id="warp-ring" aria-hidden="true"></div>
+    <Navbar />
+    <main id="main" data-screens>
+      <slot />
+    </main>
+    <ScreenDots />
+    <Footer />
+    <script>
+      import '../scripts/main';
+    </script>
+  </body>
+</html>

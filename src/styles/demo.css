@@ -1,0 +1,185 @@
+/* CTCC-13 示範頁面用的樣式（首頁 / 解決方案 / 聯絡）。正式頁面（CTCC-14/15/16）會取代，可整檔刪除。 */
+.hero {
+  position: relative;
+  max-width: 46rem;
+}
+.hero .display {
+  white-space: normal;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-5);
+}
+a.card {
+  display: block;
+}
+.card .h3 {
+  margin-bottom: var(--sp-2);
+}
+.num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.2em;
+  color: var(--c-yellow-400);
+}
+
+/* 首屏右側的軌道裝飾 */
+.orbit {
+  position: absolute;
+  right: -6vmax;
+  top: 50%;
+  width: min(62vmin, 640px);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.orbit i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgb(146 214 241 / 0.16);
+  animation: orbit-spin 80s linear infinite;
+}
+.orbit i:nth-child(2) {
+  inset: 12%;
+  animation-duration: 120s;
+  animation-direction: reverse;
+  border-color: rgb(146 214 241 / 0.1);
+}
+.orbit i:nth-child(3) {
+  inset: 26%;
+  animation-duration: 60s;
+  border-color: rgb(0 161 224 / 0.22);
+}
+.orbit i::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-blue-300);
+  box-shadow: 0 0 14px var(--c-blue-400);
+}
+.orbit i:nth-child(3)::after {
+  background: var(--c-yellow-400);
+  box-shadow: var(--glow-yellow);
+}
+.orbit b {
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, rgb(190 232 250 / 0.9), rgb(0 161 224 / 0.55) 38%, rgb(10 30 80 / 0.9) 72%);
+  box-shadow: 0 0 80px rgb(0 161 224 / 0.45), inset -18px -18px 40px rgb(3 7 18 / 0.7);
+}
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.scroll-hint {
+  position: absolute;
+  left: var(--gutter);
+  bottom: var(--sp-6);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--color-text-faint);
+}
+.scroll-hint span {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(var(--c-yellow-400), transparent);
+  transform-origin: top;
+  animation: hint 2.2s var(--ease-in-out) infinite;
+}
+@keyframes hint {
+  0% {
+    transform: scaleY(0);
+  }
+  60% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+
+/* 解決方案：星球版面 */
+.planet-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: center;
+  gap: var(--sp-8);
+}
+.planet-screen--flip .planet-layout > :first-child {
+  order: 2;
+}
+.planet {
+  position: relative;
+  justify-self: center;
+  width: min(42vmin, 420px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 28%, hsl(var(--h) 90% 82% / 0.95), hsl(var(--h) 100% 46% / 0.7) 34%, hsl(calc(var(--h) + 30) 70% 16%) 72%, #040a1c 100%);
+  box-shadow:
+    0 0 90px hsl(var(--h) 100% 50% / 0.28),
+    inset -26px -30px 60px rgb(3 7 18 / 0.75),
+    inset 8px 8px 28px hsl(var(--h) 100% 90% / 0.25);
+}
+.planet__ring {
+  position: absolute;
+  left: -22%;
+  right: -22%;
+  top: 38%;
+  bottom: 38%;
+  border-radius: 50%;
+  border: 1px solid hsl(var(--h) 90% 80% / 0.45);
+  transform: rotate(-16deg);
+  box-shadow: 0 0 24px hsl(var(--h) 100% 60% / 0.2);
+}
+
+@media (max-width: 860px) {
+  .grid-3 {
+    grid-template-columns: 1fr;
+    gap: var(--sp-3);
+  }
+  .card {
+    padding: var(--sp-4) var(--sp-5);
+  }
+  .planet-layout {
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+  }
+  .planet-screen--flip .planet-layout > :first-child {
+    order: 0;
+  }
+  .planet {
+    width: min(34vmin, 220px);
+    order: -1;
+    justify-self: start;
+  }
+  .orbit {
+    right: -30vmax;
+    opacity: 0.55;
+  }
+  .scroll-hint {
+    display: none;
+  }
+  .hero {
+    padding-bottom: var(--sp-6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit i,
+  .scroll-hint span {
+    animation: none;
+  }
+}

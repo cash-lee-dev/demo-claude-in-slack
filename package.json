@@ -1,27 +1,22 @@
 {
-  "name": "demo-claude-in-slack",
-  "version": "1.0.0",
+  "name": "may4s-website",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Cyberpunk neon Vue 3 multi-page app with frontend-only login",
+  "description": "May4s 伊原力科技官網改版（Astro 靜態站 · GSAP · Three.js）",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "hash": "node scripts/hash.mjs"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
   },
   "dependencies": {
-    "vue": "^3.5.45",
-    "vue-i18n": "^11.4.18",
-    "vue-router": "^4.6.4"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.3.5",
-    "@vitejs/plugin-vue": "^6.0.10",
-    "tailwindcss": "^4.3.5",
-    "vite": "^8.3.6"
+    "@fontsource-variable/noto-sans-tc": "^5.3.1",
+    "astro": "^5.18.2",
+    "gsap": "^3.15.1",
+    "three": "^0.187.0"
   }
 }

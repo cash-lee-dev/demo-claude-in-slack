@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Screen from '../../components/Screen.astro';
+import { footerLinks, url } from '../../data/site';
+---
+
+<!--
+  CTCC-13 示範聯絡頁：沒有表單，只驗證引擎與版型。正式設計由 CTCC-16 取代。
+-->
+<BaseLayout title="聯絡我們" description="聯絡 May4s 伊原力科技，一起規劃你的企業 Agentic OS。">
+  <Screen id="intro" label="聯絡我們">
+    <div class="stack-lg">
+      <p class="eyebrow" data-enter>Contact</p>
+      <h1 class="display" data-split="chars">聯絡我們</h1>
+      <p class="lead" data-split="lines">告訴我們你的場景，我們會在一個工作天內回覆（佔位內容）。</p>
+      <div class="row" data-enter>
+        <a class="btn btn--primary" href={footerLinks.email.href} data-magnetic>寄信給我們 <span class="btn__arrow" aria-hidden="true">→</span></a>
+        <a class="btn" href={url('/')} data-magnetic>回到首頁</a>
+      </div>
+    </div>
+  </Screen>
+
+  <Screen id="channels" label="聯絡管道">
+    <div class="stack-lg">
+      <p class="eyebrow" data-enter>Channels</p>
+      <h2 class="h2" data-split="lines">用你習慣的方式找我們</h2>
+      <div class="grid-3">
+        <a class="card" href={footerLinks.email.href} data-enter data-depth="1.2"><h3 class="h3">Email</h3><p class="muted">{footerLinks.email.label}</p></a>
+        <a class="card" href={footerLinks.linkedin.href} target="_blank" rel="noopener" data-enter data-depth="1.6"><h3 class="h3">LinkedIn</h3><p class="muted">追蹤最新動態（佔位連結）</p></a>
+        <a class="card" href={footerLinks.facebook.href} target="_blank" rel="noopener" data-enter data-depth="2"><h3 class="h3">Facebook</h3><p class="muted">活動與講座資訊（佔位連結）</p></a>
+      </div>
+    </div>
+  </Screen>
+
+  <Screen id="next" label="接下來">
+    <div class="stack-lg">
+      <p class="eyebrow" data-enter>What's next</p>
+      <h2 class="h2" data-split="lines">從一場 30 分鐘的對話開始</h2>
+      <p class="lead" data-split="lines">表單與預約功能會在 CTCC-16 加入。目前這一屏用來驗證頁尾與最後一屏的版面（佔位內容）。</p>
+    </div>
+  </Screen>
+</BaseLayout>

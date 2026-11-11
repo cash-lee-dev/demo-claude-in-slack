@@ -1,0 +1,245 @@
+/*
+ * 整頁切換引擎的版面與狀態樣式（配合 src/scripts/screens/engine.ts）
+ *
+ * 約定：
+ *   <main data-screens>              容器（BaseLayout 提供）
+ *     <section data-screen id="…">   一屏（用 <Screen> 元件產生）
+ *   data-state = active | entering | leaving | idle
+ */
+
+[data-screens] {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-screens);
+  overflow: hidden;
+  view-transition-name: page;
+}
+
+[data-screen] {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding:
+    calc(var(--nav-h) + var(--sp-4))
+    calc(var(--gutter) + 36px)
+    var(--sp-8)
+    var(--gutter);
+  will-change: transform, opacity;
+}
+[data-screen][data-align='start'] {
+  align-items: flex-start;
+  padding-top: calc(var(--nav-h) + var(--sp-8));
+}
+[data-screen][data-align='end'] {
+  align-items: flex-end;
+}
+
+/* 最後一屏為固定頁尾預留空間 */
+[data-screen]:last-child {
+  padding-bottom: var(--footer-reserve);
+}
+
+[data-screen][data-state='idle'] {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-screen][data-state='leaving'] {
+  pointer-events: none;
+}
+
+.screen__inner {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+}
+
+/* 不啟用 JS：退回一般直向捲動頁面（所有屏依序排列） */
+html:not(.js) [data-screens] {
+  position: static;
+  overflow: visible;
+  view-transition-name: none;
+}
+html:not(.js) [data-screen] {
+  position: relative;
+  min-height: 100svh;
+}
+html:not(.js) .screen-dots {
+  display: none;
+}
+html:not(.js) .site-footer {
+  position: static;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* 引擎就緒前先隱藏需要入場動畫的內容，避免「先閃一下再隱藏」。
+   2s 保險：萬一 JS 沒有載入，內容仍會出現。 */
+html.js [data-screens]:not([data-ready]) [data-enter],
+html.js [data-screens]:not([data-ready]) [data-split] {
+  visibility: hidden;
+  animation: reveal-safety 0s 2.5s forwards;
+}
+html.js [data-screens]:not([data-ready]) [data-screen]:not(:first-child) {
+  visibility: hidden;
+}
+@keyframes reveal-safety {
+  to {
+    visibility: visible;
+  }
+}
+
+/* SplitText：逐字模式以「詞」為單位換行（Agentic 之類的英文單字不會被拆開）。
+   逐字模式只適合短標題；長的中文句子請用預設的 lines。 */
+.split-char {
+  display: inline-block;
+  white-space: pre;
+}
+.split-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* 曲速光環（屏切換時沿遮罩邊緣擴散） */
+.warp-ring {
+  position: fixed;
+  z-index: var(--z-ring);
+  border-radius: 50%;
+  border: 1px solid rgb(146 214 241 / 0.55);
+  box-shadow:
+    0 0 36px rgb(0 161 224 / 0.45),
+    inset 0 0 70px rgb(0 161 224 / 0.22);
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+}
+
+/* ── 頁面間轉場（Astro View Transitions） ──────────────────────────
+   策略：
+   1. 舊頁 root 快照直接隱藏；新頁 root 是「即時」畫面，所以持久化的星空不會凍結或閃爍。
+   2. 只有 main（page）做轉場：舊內容往鏡頭飛出（放大 + 淡出 + 模糊），
+      新內容以圓形遮罩從點擊處擴散顯現 —— 與屏切換相同的語彙。
+   3. 導覽列 / 頁尾 / 屏數點 / 游標層各自命名，維持在 main 之上。 */
+:root {
+  --vt-x: 50%;
+  --vt-y: 45%;
+  --vt-dur: 0.95s;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-group(page) {
+  animation-duration: var(--vt-dur);
+}
+::view-transition-old(page),
+::view-transition-new(page) {
+  mix-blend-mode: normal;
+  animation-duration: var(--vt-dur);
+  animation-fill-mode: both;
+}
+::view-transition-old(page) {
+  animation-name: vt-page-out;
+  animation-timing-function: var(--ease-warp);
+}
+::view-transition-new(page) {
+  animation-name: vt-page-in;
+  animation-timing-function: var(--ease-warp);
+}
+html[data-astro-transition='back']::view-transition-old(page) {
+  animation-name: vt-page-out-back;
+}
+html[data-astro-transition='back']::view-transition-new(page) {
+  animation-name: vt-page-in-back;
+}
+
+@keyframes vt-page-out {
+  to {
+    opacity: 0;
+    transform: scale(1.14);
+    filter: blur(8px);
+  }
+}
+@keyframes vt-page-out-back {
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+    filter: blur(8px);
+  }
+}
+@keyframes vt-page-in {
+  from {
+    clip-path: circle(0% at var(--vt-x) var(--vt-y));
+    transform: scale(0.94);
+  }
+  to {
+    clip-path: circle(110% at var(--vt-x) var(--vt-y));
+    transform: scale(1);
+  }
+}
+@keyframes vt-page-in-back {
+  from {
+    clip-path: circle(0% at var(--vt-x) var(--vt-y));
+    transform: scale(1.08);
+  }
+  to {
+    clip-path: circle(110% at var(--vt-x) var(--vt-y));
+    transform: scale(1);
+  }
+}
+
+/* 固定在上層的元件：不做動畫、直接用新頁即時畫面 */
+::view-transition-old(nav),
+::view-transition-old(footer),
+::view-transition-old(fx) {
+  display: none;
+}
+::view-transition-new(nav),
+::view-transition-new(footer),
+::view-transition-new(fx) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-group(nav),
+::view-transition-group(footer),
+::view-transition-group(fx),
+::view-transition-group(dots) {
+  animation-duration: 0s;
+}
+::view-transition-old(dots),
+::view-transition-new(dots) {
+  mix-blend-mode: normal;
+  animation-duration: 0.45s;
+}
+
+/* ── prefers-reduced-motion：降級為單純淡入淡出 ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* Astro 的 viewtransitions.css 在 reduced-motion 下用 !important 關掉所有轉場動畫，
+     這裡以更高的 specificity（html::…）+ !important 覆寫成單純淡入淡出。 */
+  html::view-transition-old(page) {
+    animation: vt-fade-out 0.3s linear both !important;
+  }
+  html::view-transition-new(page) {
+    animation: vt-fade-in 0.3s linear both !important;
+    clip-path: none;
+  }
+  .warp-ring {
+    display: none;
+  }
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}

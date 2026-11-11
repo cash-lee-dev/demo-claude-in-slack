@@ -19,13 +19,15 @@ jobs:
 
       - run: npm ci
 
-      - name: Build (dummy env, no secrets)
+      - name: Build
         run: npm run build
-        env:
-          VITE_AUTH_HASH_KEY: ci-dummy-hash-key
-          VITE_ADMIN_USERNAME: ci-admin
-          # HMAC-SHA-256('ci-dummy-hash-key', 'ci-dummy-password')
-          VITE_ADMIN_PASSWORD_HASH: f28614e5091d62cee3f3a8a4ec6aeca1b86511c116db3421d6373de142799e44
 
-      - name: Check single SPA entry point (index.html only)
-        run: test -f dist/index.html && test "$(find dist -maxdepth 1 -name "*.html" | wc -l)" -eq 1
+      - name: Check build output (dist 內要有三個頁面與星空 chunk)
+        run: |
+          test -f dist/index.html
+          test -f dist/solutions/index.html
+          test -f dist/contact/index.html
+          # Three.js 星空必須是獨立的 lazy chunk，不能被打進首屏 bundle
+          ls dist/_astro | grep -q '^starfield-gl\..*\.js$'
+          # 所有站內資源都要帶 GitHub Pages 的 base path
+          grep -q '/demo-claude-in-slack/_astro/' dist/index.html
