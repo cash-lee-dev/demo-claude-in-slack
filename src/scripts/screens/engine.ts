@@ -80,7 +80,7 @@ export class ScreenEngine {
         const mode = host.dataset.split || 'lines';
         splits.push(
           SplitText.create(host, {
-            type: mode === 'chars' ? 'chars' : mode === 'words' ? 'words' : 'lines',
+            type: mode === 'chars' ? 'words,chars' : mode === 'words' ? 'words' : 'lines',
             mask: mode === 'lines' ? 'lines' : undefined,
             autoSplit: mode === 'lines',
             onSplit: () => undefined,
