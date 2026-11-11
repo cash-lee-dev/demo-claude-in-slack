@@ -103,7 +103,7 @@ import Screen from '../components/Screen.astro';
 | `id` | section | **必填**。是深連結 hash（`/page/#id`）與事件的識別；另外也支援 `#screen-N`（1 起算） |
 | `data-screen-label` | section | 屏數點 tooltip 與 aria-label |
 | `data-align` | section | `center`（預設）/ `start` / `end` |
-| `data-split="lines｜words｜chars"` | 文字元素 | SplitText 入場：`lines`（預設，行遮罩上滑）/ `words` / `chars`（逐字，適合大標題；拉丁字母可能在窄螢幕斷在字中，只用在短標題） |
+| `data-split="lines｜words｜chars"` | 文字元素 | SplitText 入場：`lines`（預設，行遮罩上滑）/ `words` / `chars`（逐字，以詞為單位換行，適合短標題；長中文句子請用 lines，否則整段不會換行） |
 | `data-enter="up｜fade｜scale"` | 任意元素 | 整塊入場（預設 `up`：淡入 + 位移） |
 | `data-depth="n"` | 任意元素 | 視差深度倍率（預設 1）；數字越大，進出場位移越多 |
 | `data-no-screen-nav` | 任意元素 | 其內的滾輪 / 觸控不切屏（例如屏內自己的捲動區） |
