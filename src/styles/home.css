@@ -91,7 +91,7 @@
 }
 
 /* 向下提示（可點擊：觸控裝置也能前往下一屏） */
-.scroll-hint {
+.home-hint {
   position: absolute;
   left: 50%;
   bottom: var(--sp-5);
@@ -106,18 +106,18 @@
   color: var(--color-text-faint);
   transition: color var(--dur-base) var(--ease-out);
 }
-.scroll-hint:hover,
-.scroll-hint:focus-visible {
+.home-hint:hover,
+.home-hint:focus-visible {
   color: var(--color-text);
 }
-.scroll-hint__mouse {
+.home-hint__mouse {
   position: relative;
   width: 20px;
   height: 32px;
   border: 1.5px solid currentColor;
   border-radius: var(--r-pill);
 }
-.scroll-hint__mouse i {
+.home-hint__mouse i {
   position: absolute;
   left: 50%;
   top: 6px;
@@ -128,7 +128,7 @@
   background: var(--c-yellow-400);
   animation: hint-wheel 1.8s var(--ease-in-out) infinite;
 }
-.scroll-hint__chev {
+.home-hint__chev {
   width: 14px;
   height: 14px;
   animation: hint-chev 1.8s var(--ease-in-out) infinite;
@@ -215,6 +215,7 @@
 }
 .ring {
   position: absolute;
+  z-index: 1; /* 在中心球之上，行星標籤才不會被球蓋住 */
   inset: var(--ring-inset);
   pointer-events: none; /* 外圈的方框不能蓋住內圈的行星 */
 }
@@ -249,6 +250,7 @@
 
 .orbit__core {
   position: absolute;
+  z-index: 0;
   inset: 38%;
   display: grid;
   place-items: center;
@@ -812,10 +814,15 @@
 
 /* 手機：降低動畫複雜度、縮小留白、隱藏次要文字 */
 @media (max-width: 720px) {
-  .scroll-hint {
+  /* 主標題縮小到 390px 寬也能一行放下（逐字切分的 .split-char 不受影響） */
+  .hero .display {
+    font-size: min(var(--fs-display), 10vw);
+    white-space: nowrap;
+  }
+  .home-hint {
     bottom: var(--sp-3);
   }
-  .scroll-hint__text {
+  .home-hint__text {
     display: none;
   }
   .hero-orbit {
@@ -930,8 +937,8 @@
 /* ═══ prefers-reduced-motion：全部降為靜態（屏切換由引擎改為淡入淡出） ═══ */
 @media (prefers-reduced-motion: reduce) {
   .hero-orbit i,
-  .scroll-hint__mouse i,
-  .scroll-hint__chev,
+  .home-hint__mouse i,
+  .home-hint__chev,
   .ring__spin,
   .pl__btn,
   .tr-const,
@@ -962,7 +969,7 @@
   }
   .pl__btn,
   .planet-info__item,
-  .scroll-hint {
+  .home-hint {
     transition-duration: 0.01ms;
   }
   .fde-pulse,
