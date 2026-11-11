@@ -189,6 +189,8 @@ import { onScreensReady, getEngine } from '../scripts/screens';
 - **動畫觸發**：屏內 CSS 動畫只在 `[data-state]:not([data-state='idle'])`（進場中 / 作用中）套用，離開變 idle 後重設，下次進場重播；元素的基礎狀態就是最終樣子（動畫用 `backwards` 填充），所以 `prefers-reduced-motion`（`animation: none`）自然得到完整的靜態畫面。
 - **一屏放得下**：舞台 / 圖示大小受 `svh` 限制（`--stage`、SVG `max-height`），並在 `max-height: 800 / 740 / 640px` 與手機寬度逐步隱藏次要文字（lead、步驟說明、eyebrow）。
 - **手機簡化**：隱藏脈衝光點、星座旋轉、行星名稱（只顯示被選取者）、部分裝飾環；沒有視差與磁吸；行星以點選展開。
+- **卡片樣式**：`.planet-info.card`、`.trust-item.card`、`.fde-step` 在 `home.css` 共用一組覆寫（不動全域 `.card`）：左上品牌藍漸層 + 右上黃色微光的背景、`::before` 以 mask 做的上亮下暗漸層邊、`::after` 底部藍色光帶（只動 `transform`，12s alternate 緩慢左右漂移，只在該屏非 idle 時播放；手機與 reduced-motion 為靜態）。
+- **class 命名要避開 `demo.css` 的全域名稱**：`demo.css` 仍有全域 `.orbit`、`.scroll-hint`，所以首頁用 `.eco-orbit`、`.home-hint`，不要再用 `.orbit` / `.scroll-hint`（`demo.css` 刪除前會互相覆蓋樣式）。
 - 軌道行星使用獨立的 `rotate` / `scale` / `translate` 屬性（不用 `transform`），因此視差（GSAP 寫 `transform`）、公轉、反向自轉與放大互不覆蓋。
 
 ## 星空背景

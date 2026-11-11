@@ -24,6 +24,84 @@
   font-size: var(--fs-base);
 }
 
+/* ── 首頁卡片：漸層底 + 上亮下暗的漸層邊 + 底部流動光帶 ──────────────────
+ * 套用：生態系簡介卡（.planet-info）、認證卡（.trust-item）、FDE 步驟（.fde-step）。
+ * 只在首頁覆寫（全域 .card 不動，示範頁照舊）。
+ *   - 背景：左上品牌藍漸層淡出到右下透明，右上角一抹黃色微光（只是點綴）
+ *   - 邊框：不用均勻 1px，::before 以 mask 挖出漸層邊（上亮下暗，像光從上方打下來），再加頂邊高光線
+ *   - 底部光帶：::after 只動 transform（不動 box-shadow），在卡片內左右緩慢漂移；
+ *     只在該屏作用中（[data-state]:not([data-state='idle'])）才動，手機 / reduced-motion 為靜態
+ */
+:is(.planet-info.card, .trust-item.card, .fde-step) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--c-blue-100) 70%, transparent) 50%, transparent) top center / 70% 1px no-repeat,
+    radial-gradient(120% 100% at 100% 0%, color-mix(in srgb, var(--c-yellow-400) 11%, transparent), transparent 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--c-blue-500) 24%, transparent) 0%, transparent 72%),
+    var(--color-surface);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 color-mix(in srgb, var(--c-blue-50) 12%, transparent);
+}
+:is(.planet-info.card, .trust-item.card, .fde-step)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c-blue-100) 62%, transparent),
+    color-mix(in srgb, var(--c-blue-200) 16%, transparent) 55%,
+    color-mix(in srgb, var(--c-blue-200) 4%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 1;
+  pointer-events: none;
+}
+:is(.planet-info.card, .trust-item.card, .fde-step)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: -1; /* 在卡片底色之上、文字之下 */
+  width: 55%;
+  height: 44px;
+  background:
+    linear-gradient(90deg, transparent, var(--c-blue-300) 50%, transparent) bottom / 100% 2px no-repeat,
+    radial-gradient(ellipse 50% 100% at 50% 100%, color-mix(in srgb, var(--c-blue-500) 42%, transparent), transparent 72%);
+  transform: translateX(40%); /* 靜態時停在中央 */
+  pointer-events: none;
+}
+[data-state]:not([data-state='idle']) :is(.planet-info.card, .trust-item.card, .fde-step)::after {
+  animation: card-flow 12s var(--ease-in-out) infinite alternate;
+}
+.trust-item.card:nth-child(2)::after {
+  animation-delay: -6s !important; /* 兩張認證卡的光帶錯開相位 */
+}
+.fde-step:nth-child(even)::after {
+  animation-delay: -6s !important;
+}
+@keyframes card-flow {
+  from {
+    transform: translateX(-8%);
+  }
+  to {
+    transform: translateX(88%); /* 光帶寬 55%：88% × 55% ≈ 48%，剛好到右緣 */
+  }
+}
+
 /* ═══ ① 星空開場 ═══════════════════════════════════════════════════ */
 .hero {
   position: relative;
@@ -394,15 +472,14 @@
 /* ═══ ③ Forward Deployed Engineers ═════════════════════════════════ */
 .fde-steps {
   display: grid;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
 }
 .fde-step {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: baseline;
   gap: var(--sp-4);
-  padding-left: var(--sp-4);
-  border-left: 1px solid var(--color-border-strong);
+  padding: var(--sp-2) var(--sp-4);
 }
 .fde-step__n {
   font-family: var(--font-mono);
@@ -814,6 +891,10 @@
 
 /* 手機：降低動畫複雜度、縮小留白、隱藏次要文字 */
 @media (max-width: 720px) {
+  /* 卡片光帶在手機保持靜態 */
+  [data-state] :is(.planet-info.card, .trust-item.card, .fde-step)::after {
+    animation: none !important;
+  }
   /* 主標題縮小到 390px 寬也能一行放下（逐字切分的 .split-char 不受影響） */
   .hero .display {
     font-size: min(var(--fs-display), 10vw);
@@ -960,7 +1041,8 @@
   [data-state] .tr-check,
   [data-state] .tr-badge text,
   [data-state] .tr-iso-ring,
-  [data-state] .cta-rings i {
+  [data-state] .cta-rings i,
+  [data-state] :is(.planet-info.card, .trust-item.card, .fde-step)::after {
     animation: none !important;
   }
   /* 行星不再公轉，所以不需要反向自轉：直接回到擺放角度的反向，文字保持正向 */
