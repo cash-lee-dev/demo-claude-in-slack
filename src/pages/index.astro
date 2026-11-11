@@ -14,20 +14,20 @@ import { url } from '../data/site';
 
 /** 軌道行星：ring 1 內圈、2 中圈、3 外圈；--a 為起始角度，pc 為行星色（token） */
 const planets = [
-  { id: 'agentforce', ring: 1, angle: 20, color: 'var(--c-yellow-400)', name: 'Agentforce', tag: 'AI 代理人', desc: '能理解情境、主動行動的 AI 代理人，在 Salesforce 與 Slack 裡替團隊處理例行工作。' },
-  { id: 'data-cloud', ring: 1, angle: 200, color: 'var(--c-blue-200)', name: 'Data Cloud', tag: '資料與智慧', desc: '整合散落在各系統的客戶資料，為 AI 與決策提供統一、即時的資料基礎。' },
+  { id: 'agentforce', ring: 1, angle: 20, color: 'var(--c-yellow-400)', name: 'Agentforce', tag: '智慧層', desc: 'Sales / Service / Ops Agent 被 Slack 召喚，向 Salesforce 落地，處理常態作業。' },
+  { id: 'data-cloud', ring: 1, angle: 200, color: 'var(--c-blue-200)', name: 'Data Cloud', tag: '數據雲', desc: '統一記憶體：把 ERP / Web / Social 資料同步成客戶 360，Agent 才有完整脈絡。' },
   { id: 'sales', ring: 2, angle: 70, color: 'var(--c-blue-400)', name: 'Sales Cloud', tag: '銷售雲', desc: '從商機、報價到成交的銷售流程一次管理，讓團隊把時間花在客戶身上。' },
   { id: 'service', ring: 2, angle: 190, color: 'var(--c-blue-300)', name: 'Service Cloud', tag: '服務雲', desc: '統一受理工單、保固與現場服務，讓客戶服務更快、更一致。' },
-  { id: 'slack', ring: 2, angle: 310, color: 'var(--c-blue-100)', name: 'Slack', tag: '協作平台', desc: '把團隊、資料與流程集中在同一個頻道，人與 AI 在對話中一起完成工作。' },
-  { id: 'marketing-commerce', ring: 3, angle: 120, color: 'var(--c-blue-500)', name: 'Marketing & Commerce', tag: '行銷與商務', desc: '串連行銷旅程與電商交易，打造從觸及、轉換到回購的完整客戶體驗。' },
+  { id: 'slack', ring: 2, angle: 310, color: 'var(--c-blue-100)', name: 'Slack', tag: 'System of Work', desc: '員工面向的工作面：對話、決策、Agent 召喚、簽核、推播全在這裡發生。' },
+  { id: 'marketing-commerce', ring: 3, angle: 120, color: 'var(--c-blue-500)', name: 'Marketing & Commerce', tag: '行銷雲 · 電商雲', desc: '串連行銷旅程與電商交易，打造從觸及、轉換到回購的完整客戶體驗。' },
   { id: 'mulesoft-tableau', ring: 3, angle: 300, color: 'var(--c-yellow-200)', name: 'MuleSoft & Tableau', tag: '整合與分析', desc: '串接企業既有系統，並以視覺化分析呈現洞察，讓資料真正流動起來。' },
 ];
 
 const fdeSteps = [
-  { n: '01', t: '駐點洞察', d: '與客戶團隊並肩，從現場理解真正的問題。' },
-  { n: '02', t: '共創原型', d: '小步快跑，用能運作的原型取代冗長文件。' },
-  { n: '03', t: '上線落地', d: '在 Salesforce、Slack 與 Agentforce 上快速交付。' },
-  { n: '04', t: '持續演進', d: '依使用回饋不斷迭代，讓價值持續放大。' },
+  { n: '01', t: '商業策略顧問', d: '從業務痛點出發，完整走完 ROI 效益路徑。' },
+  { n: '02', t: '共創原型', d: '打造「概念驗證延伸版」示範專案，不只驗證技術可行。' },
+  { n: '03', t: '平台導入共建', d: 'Slack + Salesforce Headless + Agentforce，與你共建、共構，逐週上線。' },
+  { n: '04', t: '維運與 CoE', d: '建立內部 Agent CoE，讓 Agentic OS 持續成長。' },
 ];
 ---
 
@@ -38,10 +38,10 @@ const fdeSteps = [
       <i></i><i></i><i></i><b></b>
     </div>
     <div class="stack-lg hero">
-      <p class="eyebrow" data-enter>May4s 伊原力科技</p>
+      <p class="eyebrow" data-enter>打造你的智慧代理型企業</p>
       <h1 class="display" data-split="chars">企業 Agentic OS</h1>
       <p class="lead hero__sub" data-split="lines">
-        以 Salesforce、Slack 與 Agentforce，讓人與 AI 代理人在同一個工作空間協作，把企業營運變成會自己運轉的系統。
+        No.1 Slack 合作夥伴，我們把 Slack、Salesforce、Agentforce 串接成一套能實際推動業務前進的系統。
       </p>
       <div class="row" data-enter>
         <a class="btn btn--primary" href={url('/solutions/')} data-magnetic>探索解決方案 <span class="btn__arrow" aria-hidden="true">→</span></a>
@@ -60,8 +60,8 @@ const fdeSteps = [
     <div class="split">
       <div class="stack-lg">
         <p class="eyebrow" data-enter>Salesforce Ecosystem</p>
-        <h2 class="h2" data-split="lines">圍繞客戶運轉的 Salesforce 生態系</h2>
-        <p class="lead ecosystem__lead" data-split="lines">從銷售、服務、行銷到資料與 AI，我們把整個生態系串成一個協作的整體。</p>
+        <h2 class="h2" data-split="lines">一個以 Salesforce 為核心的生態系</h2>
+        <p class="lead ecosystem__lead" data-split="lines">以 Salesforce 為底座，串接數據、電商、Slack、銷售、服務、行銷與 Agentforce，讓前台團隊協作。</p>
         <div class="planet-info card" id="planet-info" aria-live="polite" data-enter data-glow>
           {planets.map((p, i) => (
             <div class="planet-info__item" data-planet-info={p.id} data-active={i === 0 ? '' : undefined} style={`--pc:${p.color}`}>
@@ -108,8 +108,8 @@ const fdeSteps = [
     <div class="split split--fde">
       <div class="stack-lg">
         <p class="eyebrow" data-enter>Forward Deployed Engineers</p>
-        <h2 class="h2" data-split="lines">與客戶共建價值</h2>
-        <p class="lead fde__lead" data-split="lines">Forward Deployed Engineers（FDE）直接進駐客戶現場，把顧問、工程與 AI 能力帶進日常工作，與客戶團隊共同定義問題、共同打造、共同驗收。</p>
+        <h2 class="h2" data-split="lines">不是交付一個系統，而是共建一個 Agentic OS</h2>
+        <p class="lead fde__lead" data-split="lines">Forward Deployed Engineers（FDE）與你的業務一起共建、共構，留下能持續造 Agent 的內部能力。</p>
         <ol class="fde-steps" data-enter="fade">
           {fdeSteps.map((s, i) => (
             <li class="fde-step" style={`--i:${i}`}>
@@ -168,18 +168,18 @@ const fdeSteps = [
         <p class="lead trust__lead" data-split="lines">專業與資安，是我們與客戶共事的基本功。</p>
         <ul class="trust-list">
           <li class="trust-item card" data-enter data-glow>
-            <h3 class="trust-item__t">Salesforce 認證團隊</h3>
-            <p class="trust-item__d">顧問與工程師持有 Salesforce 官方認證，涵蓋平台管理、開發、解決方案顧問與 Agentforce 等領域。</p>
+            <h3 class="trust-item__t">Salesforce Summit 合作夥伴</h3>
+            <p class="trust-item__d">最高夥伴等級，連續兩年榮獲 Salesforce Top Performing Award。</p>
           </li>
           <li class="trust-item card" data-enter data-glow>
             <h3 class="trust-item__t">ISO/IEC 27001:2022</h3>
-            <p class="trust-item__d">通過資訊安全管理系統國際標準驗證，以制度化流程保護每一份客戶資料。</p>
+            <p class="trust-item__d">我們通過 ISO/IEC 27001:2022 認證，資訊安全管理涵蓋 CRM 導入與開發流程，全程守護客戶資料。</p>
           </li>
         </ul>
       </div>
 
       <figure class="trust-diagram" data-enter="fade" data-depth="0.8">
-        <svg viewBox="0 0 440 290" role="img" aria-label="Salesforce 認證團隊徽章與 ISO/IEC 27001:2022 資訊安全管理系統徽章，以星座連線相連">
+        <svg viewBox="0 0 440 290" role="img" aria-label="Salesforce Summit 合作夥伴徽章與 ISO/IEC 27001:2022 認證徽章，以星座連線相連">
           <!-- 星座：五顆星繞著 Salesforce 認證徽章 -->
           <g class="tr-const">
             <polygon class="tr-const__line" points="130,78 208,134.7 178.2,226.3 81.8,226.3 52,134.7" pathLength="1" />
@@ -196,7 +196,7 @@ const fdeSteps = [
           <g class="tr-badge tr-badge--sf">
             <polygon class="tr-hex" points="130,104 178.5,132 178.5,188 130,216 81.5,188 81.5,132" />
             <text x="130" y="158" text-anchor="middle" class="tr-badge__a">Salesforce</text>
-            <text x="130" y="178" text-anchor="middle" class="tr-badge__b">認證團隊</text>
+            <text x="130" y="178" text-anchor="middle" class="tr-badge__b">Summit 夥伴</text>
           </g>
           <!-- ISO 徽章 -->
           <g class="tr-badge tr-badge--iso">
@@ -204,7 +204,7 @@ const fdeSteps = [
             <path class="tr-shield" pathLength="1" d="M320 96 L366 112 V166 C366 196 346 216 320 228 C294 216 274 196 274 166 V112 Z" />
             <path class="tr-check" pathLength="1" d="M298 162 L313 177 L342 146" fill="none" />
             <text x="320" y="262" text-anchor="middle" class="tr-badge__a">ISO/IEC 27001:2022</text>
-            <text x="320" y="280" text-anchor="middle" class="tr-badge__b">資訊安全管理系統</text>
+            <text x="320" y="280" text-anchor="middle" class="tr-badge__b">資訊安全全程有保障</text>
           </g>
         </svg>
       </figure>
@@ -219,7 +219,7 @@ const fdeSteps = [
       <h2 class="h2 cta__title" data-split="lines">準備好打造你的 Agentic OS 了嗎？</h2>
       <p class="lead" data-split="lines">告訴我們你的情境，May4s 的顧問與 FDE 團隊會與你並肩，把想法變成真正上線的系統。</p>
       <div class="row" data-enter>
-        <a class="btn btn--primary btn--lg" href={url('/contact/')} data-magnetic>預約諮詢 <span class="btn__arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn--primary btn--lg" href={url('/contact/')} data-magnetic>立即諮詢 <span class="btn__arrow" aria-hidden="true">→</span></a>
         <a class="btn btn--lg" href={url('/solutions/')} data-magnetic>探索解決方案</a>
       </div>
     </div>
