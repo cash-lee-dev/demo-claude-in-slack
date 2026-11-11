@@ -6,9 +6,10 @@
  *   - 換頁後重新套用被 Astro 覆寫掉的 <html> 屬性
  */
 import { prefersReducedMotion } from './motion';
-import { applyWarpVar, kickWarp } from './warp';
+import { kickWarp } from './warp';
 import { getEngine } from './screens';
 
+const NAV_LOCK_FAILSAFE_MS = 5000;
 let vt = { x: '50%', y: '45%' };
 
 /** <html> 的 class / style 每次換頁都會被新頁面的內容覆寫，需要重新套用 */
@@ -17,7 +18,6 @@ export function applyRootState(): void {
   root.classList.add('js');
   root.style.setProperty('--vt-x', vt.x);
   root.style.setProperty('--vt-y', vt.y);
-  applyWarpVar();
 }
 
 export function initTransitions(): void {
@@ -35,7 +35,14 @@ export function initTransitions(): void {
 
   document.addEventListener('astro:before-preparation', (e) => {
     const engine = getEngine();
-    if (engine) engine.locked = true; // 導覽中，忽略滾輪 / 鍵盤 / 觸控
+    if (engine) {
+      engine.locked = true; // 導覽中，忽略滾輪 / 鍵盤 / 觸控
+      // 保險：導覽若在 swap 前被中止（網路中斷、被 preventDefault），不會 swap、也不會有新引擎，
+      // 舊引擎會一直鎖住。5 秒後若這個引擎還在，就解鎖（swap 成功的話它早已被 destroy）。
+      window.setTimeout(() => {
+        if (getEngine() === engine) engine.locked = false;
+      }, NAV_LOCK_FAILSAFE_MS);
+    }
     const back = (e as Event & { direction?: string }).direction === 'back';
     if (!prefersReducedMotion()) kickWarp(1.5, 1.6, back ? -1 : 1);
   });

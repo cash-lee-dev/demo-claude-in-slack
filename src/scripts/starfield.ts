@@ -47,16 +47,10 @@ export function initStarfield(): void {
   host.dataset.starfield = 'pending';
 
   // ── CSS 星雲 / 星點的滑鼠視差（WebGL 前後都適用，成本極低） ──
-  const layers = [
-    { el: host.querySelector<HTMLElement>('.sf-n1'), k: 14 },
-    { el: host.querySelector<HTMLElement>('.sf-n2'), k: -22 },
-    { el: host.querySelector<HTMLElement>('.sf-band'), k: 8 },
-    { el: host.querySelector<HTMLElement>('.sf-css'), k: 5 },
-  ].filter((l): l is { el: HTMLElement; k: number } => !!l.el);
-  const movers = layers.map((l) => ({
-    x: gsap.quickTo(l.el, 'x', { duration: 1.6, ease: 'power3.out' }),
-    y: gsap.quickTo(l.el, 'y', { duration: 1.6, ease: 'power3.out' }),
-    k: l.k,
+  const movers = [...host.querySelectorAll<HTMLElement>('.sf-px[data-px]')].map((el) => ({
+    x: gsap.quickTo(el, 'x', { duration: 1.6, ease: 'power3.out' }),
+    y: gsap.quickTo(el, 'y', { duration: 1.6, ease: 'power3.out' }),
+    k: Number(el.dataset.px),
   }));
   onPointerMove(() => {
     if (prefersReducedMotion()) return;
@@ -81,6 +75,7 @@ export function initStarfield(): void {
         count,
         maxDpr: mobile ? 1.5 : 2,
         onLost: () => {
+          gl?.dispose();
           gl = null;
           gsap.ticker.remove(tick);
           fallback('context-lost');

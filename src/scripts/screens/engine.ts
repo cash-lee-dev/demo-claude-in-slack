@@ -22,6 +22,8 @@ const WHEEL_THRESHOLD = 40;
 const WHEEL_GESTURE_GAP = 120;
 /** 觸控：Observer 的滑動距離門檻（px） */
 const SWIPE_TOLERANCE = 48;
+/** 清除動畫寫入的 inline style（白名單；不可用 'all'，會連 --h 這類頁面自己的 inline style 一起清掉） */
+const CLEAR_ANIM = 'transform,opacity,visibility,filter,y,yPercent,scale';
 
 type Origin = [number, number]; // 遮罩擴散中心（視窗百分比）
 const CENTER: Origin = [50, 52];
@@ -47,7 +49,11 @@ export class ScreenEngine {
   /** 外部鎖（例如頁面正在導覽中） */
   locked = false;
 
+  /** 主轉場時間軸：結束 = 解除輸入鎖（約 DURATION 秒） */
   private tl: gsap.core.Timeline | null = null;
+  /** 進入內容的逐字 / 視差入場：獨立時間軸，不佔用輸入鎖，可能比主轉場晚結束 */
+  private ctl: gsap.core.Timeline | null = null;
+  private pendingHash = false;
   private observer: Observer | null = null;
   private cleanups: Array<() => void> = [];
   private destroyed = false;
@@ -150,6 +156,7 @@ export class ScreenEngine {
     emit('screen:enter', ctx);
 
     this.tl?.kill();
+    this.ctl?.kill();
     const tl = gsap.timeline({ onComplete: () => this.finish(ctx, hadFocus) });
     this.tl = tl;
     if (ctx.reduced) this.buildReduced(tl, ctx);
@@ -162,6 +169,7 @@ export class ScreenEngine {
     if (this.destroyed) return;
     this.destroyed = true;
     this.tl?.kill();
+    this.ctl?.kill();
     this.observer?.kill();
     this.cleanups.forEach((fn) => fn());
     this.cleanups = [];
@@ -191,6 +199,8 @@ export class ScreenEngine {
       preventDefault: true,
       allowClicks: true,
       ignore: '[data-no-screen-nav], input, textarea, select',
+      // Ctrl+滾輪 / 觸控板縮放不能被攔截（WCAG 1.4.4）；UI 鎖定（手機選單開啟）時完全不 preventDefault
+      ignoreCheck: (e: Event) => (e as WheelEvent).ctrlKey || this.isBlocked(),
       onPress: () => {
         g.touchConsumed = false;
       },
@@ -204,8 +214,11 @@ export class ScreenEngine {
     this.cleanups.push(() => window.removeEventListener('keydown', onKey));
 
     const onHash = () => {
-      const i = this.indexFromHash();
-      if (i !== null && i !== this.index) this.goTo(i, 'hash');
+      if (this.animating) {
+        this.pendingHash = true; // 切換中收到的網址變更：結束後再對齊
+        return;
+      }
+      this.syncToLocation();
     };
     window.addEventListener('hashchange', onHash);
     this.cleanups.push(() => window.removeEventListener('hashchange', onHash));
@@ -235,6 +248,7 @@ export class ScreenEngine {
   }
 
   private onWheel(e: WheelEvent): void {
+    if (e.ctrlKey) return;
     const g = this.gesture;
     const now = performance.now();
     if (now - g.last > WHEEL_GESTURE_GAP) {
@@ -267,6 +281,7 @@ export class ScreenEngine {
 
   private onKey(e: KeyboardEvent): void {
     if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (this.isBlocked()) return; // 手機選單開啟等情況：不攔截，讓方向鍵 / 空白鍵照常捲動選單
     const t = e.target as HTMLElement | null;
     if (t) {
       if (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
@@ -360,7 +375,7 @@ export class ScreenEngine {
   private playIntro(ctx: ScreenContext): void {
     const s = ctx.to;
     if (ctx.reduced) {
-      this.groups(s).forEach((g) => gsap.set(g.split ? this.splitTargets(g) : g.el, { clearProps: 'all' }));
+      this.groups(s).forEach((g) => gsap.set(g.split ? this.splitTargets(g) : g.el, { clearProps: CLEAR_ANIM }));
       return;
     }
     const tl = gsap.timeline();
@@ -411,15 +426,18 @@ export class ScreenEngine {
     }
 
     // 4. 進入的內容：逐字 / 逐行 / 視差入場
-    this.groups(to).forEach((g, i) => this.addEnter(tl, g, d, at + 0.22, i));
-    this.hooks.run('enter', to, ctx).forEach((a) => tl.add(a, at + 0.22));
-    tl.set({}, {}, DURATION); // 確保時間軸至少長 DURATION
+    //    內容入場放在獨立時間軸（延遲 at + 0.22 秒），主時間軸 DURATION 秒結束就解除輸入鎖
+    const ctl = gsap.timeline({ delay: at + 0.22 });
+    this.ctl = ctl;
+    this.groups(to).forEach((g, i) => this.addEnter(ctl, g, d, 0, i));
+    this.hooks.run('enter', to, ctx).forEach((a) => ctl.add(a, 0));
+    tl.set({}, {}, DURATION); // 確保主時間軸至少長 DURATION
   }
 
   /** prefers-reduced-motion：單純交叉淡入淡出，不做曲速 / 遮罩 / 視差 / 逐字 */
   private buildReduced(tl: gsap.core.Timeline, ctx: ScreenContext): void {
     const { from, to } = ctx;
-    this.groups(to).forEach((g) => gsap.set(g.split ? this.splitTargets(g) : g.el, { clearProps: 'all' }));
+    this.groups(to).forEach((g) => gsap.set(g.split ? this.splitTargets(g) : g.el, { clearProps: CLEAR_ANIM }));
     if (from) tl.to(from.el, { opacity: 0, duration: 0.2, ease: 'none' }, 0);
     tl.fromTo(to.el, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'none' }, 0.12);
   }
@@ -429,7 +447,7 @@ export class ScreenEngine {
     if (from) {
       this.setState(from, 'idle');
       gsap.set(from.el, { clearProps: 'transform,opacity,filter,clipPath,zIndex,scale' });
-      this.groups(from).forEach((g) => gsap.set(g.split ? this.splitTargets(g) : g.el, { clearProps: 'transform,opacity,y,yPercent,scale' }));
+      this.groups(from).forEach((g) => gsap.set(g.split ? this.splitTargets(g) : g.el, { clearProps: CLEAR_ANIM }));
     }
     this.setState(to, 'active');
     gsap.set(to.el, { clearProps: 'transform,opacity,filter,clipPath,zIndex,scale' });
@@ -440,6 +458,17 @@ export class ScreenEngine {
     this.hooks.run('afterLeave', from ?? to, ctx);
     this.hooks.run('afterEnter', to, ctx);
     emit('screen:change', ctx);
+    if (this.pendingHash) {
+      this.pendingHash = false;
+      this.syncToLocation();
+    }
+  }
+
+  /** 讓畫面對齊目前網址：有對應 hash 就切過去；沒有 hash 視為第一屏 */
+  private syncToLocation(): void {
+    if (!this.hashEnabled) return;
+    const want = location.hash ? this.indexFromHash() : 0;
+    if (want !== null && want !== this.index) this.goTo(want, 'hash');
   }
 
   // ── 狀態同步 ──────────────────────────────────────────────────────
@@ -459,7 +488,12 @@ export class ScreenEngine {
 
   private indexFromHash(hash: string = location.hash): number | null {
     if (!this.hashEnabled) return null;
-    const raw = decodeURIComponent(hash.slice(1));
+    let raw: string;
+    try {
+      raw = decodeURIComponent(hash.slice(1));
+    } catch {
+      return null; // 非法百分比編碼（例如 #%）：當作沒有 hash
+    }
     if (!raw) return null;
     const byId = this.screens.findIndex((s) => s.id === raw);
     if (byId >= 0) return byId;

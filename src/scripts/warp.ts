@@ -3,7 +3,7 @@
  *
  * - state.value：0 = 靜止漂移，1 = 全速曲速（可大於 1）
  * - state.dir：+1 往前（下一屏），-1 往後（上一屏）
- * - 每次變動會同步寫入 CSS 變數 --warp（供 CSS 星空 / 光暈使用），Three.js 星空則每幀直接讀 state。
+ * - 每次變動會同步寫入 #starfield 的 CSS 變數 --warp（供 CSS 星空 / 光暈使用），Three.js 星空則每幀直接讀 state。
  */
 import { gsap } from './gsap';
 import { prefersReducedMotion } from './motion';
@@ -11,14 +11,10 @@ import { prefersReducedMotion } from './motion';
 export const warpState = { value: 0, dir: 1 as 1 | -1 };
 
 let tween: gsap.core.Timeline | null = null;
-const root = () => document.documentElement;
 
-export function applyWarpVar(): void {
-  apply();
-}
-
+/** --warp 只寫在 #starfield（transition:persist，換頁不會被覆寫），避免每幀讓整份文件重算樣式 */
 function apply() {
-  root().style.setProperty('--warp', warpState.value.toFixed(3));
+  document.getElementById('starfield')?.style.setProperty('--warp', warpState.value.toFixed(3));
 }
 
 /**

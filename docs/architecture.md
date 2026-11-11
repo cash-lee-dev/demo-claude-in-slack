@@ -106,7 +106,7 @@ import Screen from '../components/Screen.astro';
 | `data-split="lines｜words｜chars"` | 文字元素 | SplitText 入場：`lines`（預設，行遮罩上滑）/ `words` / `chars`（逐字，以詞為單位換行，適合短標題；長中文句子請用 lines，否則整段不會換行） |
 | `data-enter="up｜fade｜scale"` | 任意元素 | 整塊入場（預設 `up`：淡入 + 位移） |
 | `data-depth="n"` | 任意元素 | 視差深度倍率（預設 1）；數字越大，進出場位移越多 |
-| `data-no-screen-nav` | 任意元素 | 其內的滾輪 / 觸控不切屏（例如屏內自己的捲動區） |
+| `data-no-screen-nav` | 任意元素 | 其內的滾輪 / 觸控不切屏、也不 `preventDefault`（例如屏內自己的捲動區、手機選單） |
 | `data-no-screen-keys` | 任意元素 | 其內的鍵盤事件不切屏（例如下拉選單） |
 | `data-screen-hash="false"` | `<main data-screens>` | 關閉網址 hash 同步 |
 
@@ -114,15 +114,16 @@ import Screen from '../components/Screen.astro';
 
 ### 行為
 
-- **一次一屏、不停半屏**：單一 `animating` 旗標。切換進行中所有輸入（滾輪、觸控、鍵盤、點、hash）都被忽略。
-- **滾輪**：GSAP Observer。同一次手勢累積 `|deltaY| ≥ 40` 才切換；兩個 wheel 事件間隔 > 120ms 才算新手勢，所以觸控板慣性滾動的尾巴不會連切多屏。
+- **一次一屏、不停半屏**：單一 `animating` 旗標。切換進行中所有輸入（滾輪、觸控、鍵盤、點）都被忽略；網址 hash 變更會記下來，切換結束後再對齊。鎖在主轉場（`DURATION` ≈ 1.05s）結束時解除；進入內容的逐字 / 視差入場在獨立時間軸上，可能再多跑一小段，**不佔用輸入鎖**。初次進場（intro）不上鎖，期間的輸入會中斷 intro 並直接切換。
+- **滾輪**：GSAP Observer。`Ctrl` + 滾輪（瀏覽器 / 觸控板縮放）不攔截也不切屏；`data-ui-lock`（手機選單開啟）時 Observer 完全不 `preventDefault`，選單可正常捲動。同一次手勢累積 `|deltaY| ≥ 40` 才切換；兩個 wheel 事件間隔 > 120ms 才算新手勢，所以觸控板慣性滾動的尾巴不會連切多屏。
 - **觸控**：Observer，滑動距離 ≥ 48px 切一屏，一次滑動只切一屏。
-- **鍵盤**：`↓ / PageDown / Space` 下一屏，`↑ / PageUp / Shift+Space` 上一屏，`Home / End` 首 / 末屏。在輸入框、可編輯區、`data-no-screen-keys` 內不攔截；Space 在按鈕 / 連結上保留原本的「啟動」行為；`e.repeat` 忽略。
+- **鍵盤**：`↓ / PageDown / Space` 下一屏，`↑ / PageUp / Shift+Space` 上一屏，`Home / End` 首 / 末屏。在輸入框、可編輯區、`data-no-screen-keys` 內不攔截；Space 在按鈕 / 連結上保留原本的「啟動」行為；`e.repeat` 忽略；`data-ui-lock` 時整個忽略（不 `preventDefault`，方向鍵 / 空白鍵照常捲動選單）。
 - **屏數點**：右側 dots，顯示 `目前/總數`，可點擊跳屏（一次跳多屏也只做一次轉場）；`aria-current="step"`，有 `aria-live` 播報。
-- **網址 hash**：載入時 `#id` → 對應屏；切屏後以 `history.replaceState`（保留 Astro 存在 `history.state` 的資料）更新 hash；同頁 hash 連結由引擎在 click 捕獲階段接手（Astro 對同頁 hash 只 pushState，不觸發 `hashchange`）；`hashchange` 也有處理。第一屏不加 hash。
+- **網址 hash**：載入時 `#id` → 對應屏；切屏後以 `history.replaceState`（保留 Astro 存在 `history.state` 的資料）更新 hash；同頁 hash 連結由引擎在 click 捕獲階段接手（Astro 對同頁 hash 只 pushState，不觸發 `hashchange`）；`hashchange`（含切換中收到的）也會處理；無 hash 視為第一屏；非法百分比編碼（例如 `#%`）視為沒有 hash，不會丟例外。第一屏不加 hash。
 - **焦點管理**：非作用中的屏設 `inert` + `aria-hidden`，離開的屏的內容不可被 Tab 到；若焦點原本在屏內，切換完成後移到新屏。
 - **頁面不捲動**：`html.js` 時 `overflow: hidden`；沒有 JS 時退回一般直向捲動頁面。
-- **View Transitions**：`astro:before-swap` 清除舊引擎（含還原 SplitText）、`astro:after-swap` 建立新引擎；導覽進行中（`astro:before-preparation`）引擎被鎖定。
+- **View Transitions**：`astro:before-swap` 清除舊引擎（含還原 SplitText）、`astro:after-swap` 建立新引擎；導覽進行中（`astro:before-preparation`）引擎被鎖定，若 5 秒後這個引擎還在（導覽被中止、沒有 swap）就自動解鎖。
+- **失效保護**：引擎初始化若丟例外，`main.ts` 會移除 `<html>` 的 `js` class，退回「無 JS」的直向捲動版型，不會把使用者鎖在被 `overflow:hidden` 裁切的首屏。
 
 ### 轉場語彙
 
@@ -139,7 +140,7 @@ import Screen from '../components/Screen.astro';
 
 - `<Starfield>`（`#starfield`）與 `<FxLayer>`（`#fx-layer`）使用 `transition:persist`：換頁時 DOM 節點與 `<canvas>` 都是同一個，不閃爍、不重新建立 WebGL context，曲速也能跨頁連續。
 - CSS（`screens.css`）：舊頁 `root` 快照隱藏、新頁 `root`（含活的星空）直接顯示；只有 `main`（`view-transition-name: page`）做轉場——舊內容放大淡出、新內容以圓形遮罩從點擊處擴散（`--vt-x / --vt-y`）。導覽列、屏數點、頁尾、游標層各自命名（`nav` / `dots` / `footer` / `fx`），固定在轉場內容之上。
-- `<html>` 的屬性（class、style）每次換頁都會被新頁面覆寫，所以 `transitions.ts` 的 `applyRootState()` 會在 `astro:after-swap` 重新套用（`js` class、`--vt-*`、`--warp`）。**不要把需要跨頁保留的狀態放在 `<html>` 屬性上**，放在 persist 的元素上（例如 `#fx-layer[data-cursor]`）。
+- `<html>` 的屬性（class、style）每次換頁都會被新頁面覆寫，所以 `transitions.ts` 的 `applyRootState()` 會在 `astro:after-swap` 重新套用（`js` class、`--vt-*`）。曲速的 `--warp` 只寫在 persist 的 `#starfield` 上，不受影響。**不要把需要跨頁保留的狀態放在 `<html>` 屬性上**，放在 persist 的元素上（例如 `#fx-layer[data-cursor]`）。
 - 不支援 View Transitions 的瀏覽器：`fallback="swap"` 直接換頁，引擎仍會在新頁做入場動畫。
 
 ### 公開 API
@@ -174,6 +175,7 @@ import { onScreensReady, getEngine } from '../scripts/screens';
 ## 星空背景
 
 - `<Starfield>`：CSS 星雲（三團漸層緩慢漂移）+ CSS 星空（`box-shadow` 星點，建置時以種子亂數產生）+ `<canvas>`。首屏只靠 CSS 就有完整背景，文字立即可讀。
+- 視差：滑鼠視差只寫在外層 `.sf-px[data-px]` 包裝上（GSAP 寫 transform），內層的 CSS 動畫（星雲漂移）與曲速縮放（`.sf-css`）在內層，兩者互不覆蓋。
 - `starfield.ts`：`window load` → 瀏覽器 idle（`requestIdleCallback`，timeout 2.5s）→ 偵測 WebGL → 動態 `import('./starfield-gl')`。狀態寫在 `#starfield[data-starfield]`：`pending → webgl | css`（`data-starfield-reason` 為退路原因：`no-webgl` / `init-error` / `context-lost`）。
 - `starfield-gl.ts`：單一 draw call 的 instanced quad；頂點著色器自己做透視投影（景深：近大遠小、近星受滑鼠視差影響大），`uTravel` 緩慢累加成漂移，`uWarp` 把星星沿向外方向拉長成光軌。桌機 3000 顆、手機（窄螢幕或觸控為主）1000 顆（`data-star-count`）。DPR 上限桌機 2 / 手機 1.5；連續掉幀時自動降低解析度與粒子數（自適應品質）。
 - 不支援 WebGL / 初始化失敗 / context lost → 維持 CSS 星空（含 CSS 版曲速縮放）。
@@ -194,7 +196,7 @@ import { onScreensReady, getEngine } from '../scripts/screens';
 
 ## 效能與無障礙規則
 
-- 首屏不得依賴 Three.js；Three.js 必須維持動態 import 在 idle 之後。CI 會檢查 `dist/_astro/starfield-gl.*.js` 存在（確保仍是獨立 chunk）。
+- 首屏不得依賴 Three.js；Three.js 必須維持動態 import 在 idle 之後。CI 會檢查：含 `WebGLRenderer` 的 JS 只能是 `starfield-gl.*.js`，而且各頁 HTML 不得引用 `starfield-gl`（確保 Three.js 沒被打進首屏、也沒被 preload）。
 - 沒有外部請求（字體自架、無第三方腳本 / 分析）。
 - Canvas / rAF 一律掛在 `gsap.ticker`（分頁隱藏時自動暫停）；DPR 設上限；游標拖尾粒子有數量上限且沒有粒子時停止迴圈。
 - 所有動畫都要考慮 `prefers-reduced-motion`（見上）；新增動畫時用 `prefersReducedMotion()`（`scripts/motion.ts`）或 CSS media query 降級。

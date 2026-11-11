@@ -27,12 +27,17 @@ const l3 = layer(14, 0.2);
 ---
 
 <div id="starfield" class="starfield" aria-hidden="true" data-starfield="pending" transition:persist="starfield">
-  <div class="sf-nebula"><span class="sf-n1"></span><span class="sf-n2"></span><span class="sf-n3"></span></div>
-  <div class="sf-band"></div>
-  <div class="sf-css">
-    <i style={`box-shadow:${l1}`}></i>
-    <i style={`box-shadow:${l2}`}></i>
-    <i style={`box-shadow:${l3}`}></i>
+  <!-- .sf-px 是滑鼠視差用的外層（GSAP 寫 transform）；內層才有 CSS 動畫 / 縮放，兩者不互相覆蓋 -->
+  <div class="sf-px" data-px="14"><span class="sf-n1"></span></div>
+  <div class="sf-px" data-px="-22"><span class="sf-n2"></span></div>
+  <div class="sf-px"><span class="sf-n3"></span></div>
+  <div class="sf-px" data-px="8"><div class="sf-band"></div></div>
+  <div class="sf-px" data-px="5">
+    <div class="sf-css">
+      <i style={`box-shadow:${l1}`}></i>
+      <i style={`box-shadow:${l2}`}></i>
+      <i style={`box-shadow:${l3}`}></i>
+    </div>
   </div>
   <canvas class="sf-canvas"></canvas>
   <div class="sf-warp-glow"></div>
