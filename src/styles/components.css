@@ -594,7 +594,7 @@ html:not(.js) .has-dropdown:focus-within .nav-dropdown {
   display: grid;
   place-items: center;
   width: 28px;
-  height: 22px;
+  height: 24px; /* WCAG 2.2 目標尺寸 ≥ 24px */
 }
 .screen-dot::before {
   content: '';
@@ -640,7 +640,7 @@ html:not(.js) .has-dropdown:focus-within .nav-dropdown {
 @media (max-width: 720px) {
   .screen-dot {
     width: 24px;
-    height: 20px;
+    height: 24px;
   }
   .screen-dot__label {
     display: none;

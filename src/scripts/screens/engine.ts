@@ -82,6 +82,8 @@ export class ScreenEngine {
           SplitText.create(host, {
             type: mode === 'chars' ? 'words,chars' : mode === 'words' ? 'words' : 'lines',
             mask: mode === 'lines' ? 'lines' : undefined,
+            // aria-label 只能用在標題等有角色的元素；<p> 等不能加（axe: aria-prohibited-attr），改維持原文字結構
+            aria: /^H[1-6]$/.test(host.tagName) ? 'auto' : 'none',
             autoSplit: mode === 'lines',
             onSplit: () => undefined,
             charsClass: 'split-char',
