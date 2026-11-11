@@ -28,7 +28,7 @@ npm run preview      # 預覽 dist/
 - 星空（`<Starfield>`）與游標層（`<FxLayer>`）使用 `transition:persist`，**不可**移除，也不要在頁面裡重複建立；Three.js 一定要維持動態 import（idle 後載入）。
 - `prefers-reduced-motion` 必須降級：關閉游標拖尾 / 曲速 / 視差，屏切換與頁面轉場改為淡入淡出。新增動畫時要一併處理。
 - 觸控裝置不啟用自訂游標與磁吸按鈕（以 `(hover: hover) and (pointer: fine)` 判斷）。
-- 目前 `/`、`/solutions/`、`/contact/` 是 CTCC-13 的**示範頁**（只為驗證引擎）；正式設計由 CTCC-14（首頁）、CTCC-15（解決方案）、CTCC-16（聯絡）取代，樣式在 `src/styles/demo.css`，可隨之刪除。
+- 首頁 `/` 已是 CTCC-14 的正式設計（5 個整屏，樣式 `src/styles/home.css`、互動 `src/scripts/home.ts`）。目前只有 `/solutions/` 與 `/contact/` 是 CTCC-13 的**示範頁**（只為驗證引擎）；正式設計由 CTCC-15（解決方案）、CTCC-16（聯絡）取代，兩頁用的樣式在 `src/styles/demo.css`，兩頁都完成後可刪除。
 
 ## 流程
 

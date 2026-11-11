@@ -1,0 +1,1061 @@
+/*
+ * 首頁（CTCC-14）樣式：五個整屏。只使用 tokens.css 的 var(--token)。
+ *
+ * 動畫約定：
+ *   - 屏內的 CSS 動畫只在該屏「進場中 / 作用中」才套用（見 --on 的選擇器寫法：
+ *     [data-state]:not([data-state='idle'])），離開後回到 idle 就重設，下次進場會重播。
+ *   - 動畫的基礎狀態就是「最終樣子」，動畫用 backwards 填充從起點開始，
+ *     所以 reduced-motion 只要 animation: none 就會得到完整靜態畫面。
+ *   - 手機（max-width: 720px）隱藏次要動畫元素（.hide-mobile 類的裝飾、脈衝光點、星座旋轉），降低複雜度。
+ */
+
+/* ── 共用：兩欄版面（文字 + 視覺），手機改單欄 ──────────────────────── */
+.split .h2 {
+  font-size: var(--fs-2xl); /* 兩欄屏的標題小一級，確保一屏放得下 */
+}
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-6) var(--sp-10);
+}
+.btn--lg {
+  padding: 1em 2em;
+  font-size: var(--fs-base);
+}
+
+/* ── 首頁卡片：漸層底 + 上亮下暗的漸層邊 + 底部流動光帶 ──────────────────
+ * 套用：生態系簡介卡（.planet-info）、認證卡（.trust-item）、FDE 步驟（.fde-step）。
+ * 只在首頁覆寫（全域 .card 不動，示範頁照舊）。
+ *   - 背景：左上品牌藍漸層淡出到右下透明，右上角一抹黃色微光（只是點綴）
+ *   - 邊框：不用均勻 1px，::before 以 mask 挖出漸層邊（上亮下暗，像光從上方打下來），再加頂邊高光線
+ *   - 底部光帶：::after 只動 transform（不動 box-shadow），在卡片內左右緩慢漂移；
+ *     只在該屏作用中（[data-state]:not([data-state='idle'])）才動，手機 / reduced-motion 為靜態
+ */
+:is(.planet-info.card, .trust-item.card, .fde-step) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--c-blue-100) 70%, transparent) 50%, transparent) top center / 70% 1px no-repeat,
+    radial-gradient(120% 100% at 100% 0%, color-mix(in srgb, var(--c-yellow-400) 11%, transparent), transparent 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--c-blue-500) 24%, transparent) 0%, transparent 72%),
+    var(--color-surface);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 color-mix(in srgb, var(--c-blue-50) 12%, transparent);
+}
+:is(.planet-info.card, .trust-item.card, .fde-step)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--c-blue-100) 62%, transparent),
+    color-mix(in srgb, var(--c-blue-200) 16%, transparent) 55%,
+    color-mix(in srgb, var(--c-blue-200) 4%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 1;
+  pointer-events: none;
+}
+:is(.planet-info.card, .trust-item.card, .fde-step)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: -1; /* 在卡片底色之上、文字之下 */
+  width: 55%;
+  height: 44px;
+  background:
+    linear-gradient(90deg, transparent, var(--c-blue-300) 50%, transparent) bottom / 100% 2px no-repeat,
+    radial-gradient(ellipse 50% 100% at 50% 100%, color-mix(in srgb, var(--c-blue-500) 42%, transparent), transparent 72%);
+  transform: translateX(40%); /* 靜態時停在中央 */
+  pointer-events: none;
+}
+[data-state]:not([data-state='idle']) :is(.planet-info.card, .trust-item.card, .fde-step)::after {
+  animation: card-flow 12s var(--ease-in-out) infinite alternate;
+}
+.trust-item.card:nth-child(2)::after {
+  animation-delay: -6s !important; /* 兩張認證卡的光帶錯開相位 */
+}
+.fde-step:nth-child(even)::after {
+  animation-delay: -6s !important;
+}
+@keyframes card-flow {
+  from {
+    transform: translateX(-8%);
+  }
+  to {
+    transform: translateX(88%); /* 光帶寬 55%：88% × 55% ≈ 48%，剛好到右緣 */
+  }
+}
+
+/* ═══ ① 星空開場 ═══════════════════════════════════════════════════ */
+.hero {
+  position: relative;
+  max-width: 46rem;
+}
+.hero .display {
+  white-space: normal;
+}
+.hero__sub {
+  max-width: 34em;
+}
+
+.hero-orbit {
+  position: absolute;
+  right: -6vmax;
+  top: 50%;
+  width: min(62vmin, 640px);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.hero-orbit i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  animation: spin 80s linear infinite;
+}
+.hero-orbit i:nth-child(2) {
+  inset: 12%;
+  animation-duration: 120s;
+  animation-direction: reverse;
+}
+.hero-orbit i:nth-child(3) {
+  inset: 26%;
+  animation-duration: 60s;
+  border-color: color-mix(in srgb, var(--c-blue-500) 24%, transparent);
+}
+.hero-orbit i::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-blue-300);
+  box-shadow: 0 0 14px var(--c-blue-400);
+}
+.hero-orbit i:nth-child(3)::after {
+  background: var(--c-yellow-400);
+  box-shadow: var(--glow-yellow);
+}
+.hero-orbit b {
+  position: absolute;
+  inset: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, var(--c-blue-100), color-mix(in srgb, var(--c-blue-500) 55%, transparent) 38%, var(--c-space-900) 72%);
+  box-shadow: var(--glow-blue), inset -18px -18px 40px var(--c-space-950);
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 向下提示（可點擊：觸控裝置也能前往下一屏） */
+.home-hint {
+  position: absolute;
+  left: 50%;
+  bottom: var(--sp-5);
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--color-text-faint);
+  transition: color var(--dur-base) var(--ease-out);
+}
+.home-hint:hover,
+.home-hint:focus-visible {
+  color: var(--color-text);
+}
+.home-hint__mouse {
+  position: relative;
+  width: 20px;
+  height: 32px;
+  border: 1.5px solid currentColor;
+  border-radius: var(--r-pill);
+}
+.home-hint__mouse i {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  width: 3px;
+  height: 7px;
+  margin-left: -1.5px;
+  border-radius: var(--r-pill);
+  background: var(--c-yellow-400);
+  animation: hint-wheel 1.8s var(--ease-in-out) infinite;
+}
+.home-hint__chev {
+  width: 14px;
+  height: 14px;
+  animation: hint-chev 1.8s var(--ease-in-out) infinite;
+}
+@keyframes hint-wheel {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes hint-chev {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(-2px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(3px);
+  }
+}
+
+/* ═══ ② Salesforce 生態系軌道 ═══════════════════════════════════════ */
+#ecosystem .split {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+}
+
+.planet-info {
+  display: grid; /* 所有簡介疊在同一格，面板高度 = 最高的那一則，切換時不跳動 */
+  padding: var(--sp-5);
+  max-width: 30rem;
+}
+.planet-info__item {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out),
+    visibility 0s linear var(--dur-base);
+}
+.planet-info__item[data-active] {
+  opacity: 1;
+  visibility: inherit; /* 跟隨所在的屏：離開的屏 idle 時（visibility: hidden）簡介也要隱藏，不可寫 visible */
+  transform: none;
+  transition-delay: 0s;
+}
+.planet-info__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--ls-wide);
+  color: var(--color-text-muted);
+}
+.planet-info__tag i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pc);
+  box-shadow: 0 0 12px var(--pc);
+}
+
+/* 軌道舞台：正方形，大小同時受寬度與視窗高度（svh）限制，確保一屏放得下 */
+.eco-orbit {
+  --stage: min(44vw, 64svh, 620px);
+  --pl: clamp(2.25rem, calc(var(--stage) * 0.105), 3.5rem); /* 行星直徑 */
+  position: relative;
+  justify-self: center;
+  width: min(var(--stage), 100%); /* 不超出欄寬（手機有右側屏數點的留白） */
+  aspect-ratio: 1;
+  /* 公轉中的旋轉方形會一層層撐大可捲動區域（#ecosystem 的 scrollHeight 超過視窗），在舞台邊界裁切；留 margin 給行星標籤 */
+  overflow: clip;
+  overflow-clip-margin: var(--sp-12);
+}
+.ring {
+  position: absolute;
+  z-index: 1; /* 在中心球之上，行星標籤才不會被球蓋住 */
+  inset: var(--ring-inset);
+  pointer-events: none; /* 外圈的方框不能蓋住內圈的行星 */
+}
+.ring--1 {
+  --ring-inset: 31%;
+  --ring-dur: 46s;
+}
+.ring--2 {
+  --ring-inset: 19%;
+  --ring-dur: 78s;
+  --ring-dir: reverse;
+}
+.ring--3 {
+  --ring-inset: 6%;
+  --ring-dur: 120s;
+}
+.ring__spin {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-strong);
+  pointer-events: none;
+  animation: spin var(--ring-dur) linear infinite var(--ring-dir, normal);
+}
+.ring--1 .ring__spin {
+  border-color: color-mix(in srgb, var(--c-yellow-400) 34%, transparent);
+}
+.ring--3 .ring__spin {
+  border-style: dashed;
+  border-color: var(--color-border);
+}
+
+.orbit__core {
+  position: absolute;
+  z-index: 0;
+  inset: 38%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  text-align: center;
+  font-size: clamp(0.625rem, calc(var(--stage) * 0.03), 0.8125rem);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-wide);
+  color: var(--c-blue-50);
+  background: radial-gradient(circle at 34% 30%, var(--c-blue-200), var(--c-blue-600) 42%, var(--c-space-800) 78%);
+  box-shadow: var(--glow-blue), inset -10px -12px 24px var(--c-space-950);
+  pointer-events: none;
+}
+
+/* 行星：.pl 以固定角度擺在軌道上，.pl__btn 反向自轉抵銷軌道旋轉，讓標籤始終保持正向 */
+.pl {
+  position: absolute;
+  inset: 0;
+  rotate: var(--a);
+  pointer-events: none;
+}
+.pl__btn {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: var(--pl);
+  height: var(--pl);
+  translate: -50% -50%;
+  rotate: calc(var(--a) * -1);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  pointer-events: auto;
+  transition: scale var(--dur-base) var(--ease-out);
+  animation: pl-counter var(--ring-dur) linear infinite var(--ring-dir, normal);
+}
+@keyframes pl-counter {
+  from {
+    rotate: calc(var(--a) * -1);
+  }
+  to {
+    rotate: calc(var(--a) * -1 - 360deg);
+  }
+}
+.pl__dot {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 32% 28%,
+    color-mix(in srgb, var(--pc) 35%, white),
+    var(--pc) 48%,
+    color-mix(in srgb, var(--pc) 35%, var(--c-space-950)) 100%
+  );
+  box-shadow:
+    0 0 calc(var(--pl) * 0.5) color-mix(in srgb, var(--pc) 40%, transparent),
+    inset -4px -5px 10px color-mix(in srgb, var(--c-space-950) 70%, transparent);
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+.pl__name {
+  position: absolute;
+  top: calc(100% + var(--sp-1));
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+  text-shadow: 0 1px 6px var(--c-space-950), 0 0 12px var(--c-space-950);
+  pointer-events: none;
+  transition: color var(--dur-base) var(--ease-out);
+}
+.pl__btn[aria-pressed='true'] .pl__dot {
+  box-shadow:
+    0 0 0 2px var(--c-space-950),
+    0 0 0 3px var(--pc),
+    0 0 calc(var(--pl) * 0.9) color-mix(in srgb, var(--pc) 60%, transparent);
+}
+.pl__btn[aria-pressed='true'] .pl__name {
+  color: var(--color-text);
+}
+.pl__btn:focus-visible {
+  outline: none;
+}
+.pl__btn:focus-visible .pl__dot {
+  box-shadow: var(--ring-focus), 0 0 calc(var(--pl) * 0.9) color-mix(in srgb, var(--pc) 60%, transparent);
+}
+/* 放大：hover（桌機）/ 鍵盤聚焦 / 點選（觸控）。放大時浮到最上層 */
+.pl__btn:focus-visible,
+.pl__btn[aria-pressed='true'] {
+  scale: 1.25;
+  z-index: 2;
+}
+.pl__btn:focus-visible {
+  scale: 1.5;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pl__btn:hover {
+    scale: 1.5;
+    z-index: 3;
+  }
+  .pl__btn:hover .pl__name {
+    color: var(--color-text);
+  }
+  /* 指標進入軌道區時暫停公轉，才好點選 / 瞄準 */
+  .eco-orbit:hover .ring__spin,
+  .eco-orbit:hover .pl__btn {
+    animation-play-state: paused;
+  }
+}
+.eco-orbit:focus-within .ring__spin,
+.eco-orbit:focus-within .pl__btn {
+  animation-play-state: paused;
+}
+
+/* 進場：軌道由內向外展開，行星依序彈出 */
+[data-state]:not([data-state='idle']) .ring {
+  animation: ring-in 1s var(--ease-out) backwards;
+  animation-delay: calc(0.5s + (4 - var(--ring-n, 1)) * 0.12s);
+}
+[data-state]:not([data-state='idle']) .ring--1 {
+  --ring-n: 1;
+}
+[data-state]:not([data-state='idle']) .ring--2 {
+  --ring-n: 2;
+}
+[data-state]:not([data-state='idle']) .ring--3 {
+  --ring-n: 3;
+}
+[data-state]:not([data-state='idle']) .orbit__core {
+  animation: ring-in 1s var(--ease-out) 0.35s backwards;
+}
+@keyframes ring-in {
+  from {
+    scale: 0.4;
+    opacity: 0;
+  }
+}
+
+/* ═══ ③ Forward Deployed Engineers ═════════════════════════════════ */
+.fde-steps {
+  display: grid;
+  gap: var(--sp-2);
+}
+.fde-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+}
+.fde-step__n {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.2em;
+  color: var(--c-yellow-400);
+}
+.fde-step__t {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+}
+.fde-step__d {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.fde-diagram {
+  margin: 0;
+  justify-self: center;
+  width: 100%;
+  max-width: 560px;
+}
+.fde-diagram svg,
+.trust-diagram svg {
+  width: 100%;
+  height: auto;
+  max-height: 58svh;
+  overflow: visible;
+}
+
+.fde-head {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  fill: var(--color-text-faint);
+}
+.fde-node circle {
+  fill: var(--c-space-900);
+  stroke-width: 2;
+}
+.fde-node text {
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  fill: var(--color-text-muted);
+}
+.fde-node--c circle {
+  stroke: var(--c-blue-300);
+  filter: drop-shadow(0 0 6px var(--c-blue-500));
+}
+.fde-node--f circle {
+  stroke: var(--c-yellow-400);
+  filter: drop-shadow(0 0 6px var(--c-yellow-600));
+}
+.fde-line {
+  stroke-width: 1.2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.fde-line--c {
+  stroke: color-mix(in srgb, var(--c-blue-300) 55%, transparent);
+}
+.fde-line--f {
+  stroke: color-mix(in srgb, var(--c-yellow-400) 55%, transparent);
+}
+.fde-pulse {
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 0.07 0.93;
+  stroke-dashoffset: 0;
+  opacity: 0;
+}
+.fde-pulse--c {
+  stroke: var(--c-blue-200);
+}
+.fde-pulse--f {
+  stroke: var(--c-yellow-200);
+}
+.fde-core {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.fde-core__disc {
+  fill: var(--c-space-800);
+  stroke: var(--c-yellow-400);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 14px var(--c-yellow-500));
+}
+.fde-core__halo {
+  fill: none;
+  stroke: color-mix(in srgb, var(--c-yellow-400) 40%, transparent);
+  stroke-width: 1;
+}
+.fde-core text {
+  font-size: 14px;
+  font-weight: var(--fw-bold);
+  fill: var(--color-text);
+}
+
+/* 節點由外向中心匯聚 → 連線描繪 → 脈衝沿線流向中心 → 步驟依序出現 */
+[data-state]:not([data-state='idle']) .fde-node {
+  animation: fde-converge 1s var(--ease-out) backwards;
+  animation-delay: calc(0.5s + var(--i) * 0.12s);
+}
+[data-state]:not([data-state='idle']) .fde-line {
+  animation: fde-draw 0.9s var(--ease-out) backwards;
+  animation-delay: calc(0.9s + var(--i) * 0.12s);
+}
+[data-state]:not([data-state='idle']) .fde-pulse {
+  animation: fde-flow 2.6s linear infinite;
+  animation-delay: calc(2s + var(--i) * 0.35s);
+}
+[data-state]:not([data-state='idle']) .fde-core {
+  animation: fde-core-in 0.9s var(--ease-out) 1.6s backwards;
+}
+[data-state]:not([data-state='idle']) .fde-core__halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fde-halo 3s ease-out infinite 2.4s;
+}
+[data-state]:not([data-state='idle']) .fde-step {
+  animation: fde-step-in 0.8s var(--ease-out) backwards;
+  animation-delay: calc(0.8s + var(--i) * 0.45s);
+}
+@keyframes fde-converge {
+  from {
+    translate: var(--fx) var(--fy);
+    opacity: 0;
+  }
+}
+@keyframes fde-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes fde-flow {
+  0% {
+    stroke-dashoffset: 0.07;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -0.93;
+    opacity: 0;
+  }
+}
+@keyframes fde-core-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+@keyframes fde-halo {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+@keyframes fde-step-in {
+  from {
+    opacity: 0;
+    translate: -16px 0;
+  }
+}
+
+/* ═══ ④ 認證與信任 ═════════════════════════════════════════════════ */
+.trust-list {
+  display: grid;
+  gap: var(--sp-3);
+}
+.trust-item {
+  padding: var(--sp-4) var(--sp-5);
+}
+.trust-item__t {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+}
+.trust-item__d {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+.trust-diagram {
+  margin: 0;
+  justify-self: center;
+  width: 100%;
+  max-width: 560px;
+}
+
+.tr-const {
+  transform-box: view-box;
+  transform-origin: 130px 160px;
+  animation: spin 90s linear infinite;
+}
+.tr-const__line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--c-blue-300) 45%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.tr-star {
+  fill: var(--c-blue-100);
+  filter: drop-shadow(0 0 5px var(--c-blue-300));
+}
+.tr-bridge {
+  stroke: color-mix(in srgb, var(--c-yellow-400) 50%, transparent);
+  stroke-width: 1.2;
+  stroke-dasharray: 1;
+}
+.tr-bridge-pulse {
+  stroke: var(--c-yellow-200);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 0.08 0.92;
+  opacity: 0;
+}
+.tr-hex {
+  fill: color-mix(in srgb, var(--c-blue-700) 40%, var(--c-space-900));
+  stroke: var(--c-blue-300);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 12px var(--c-blue-500));
+}
+.tr-shield {
+  fill: color-mix(in srgb, var(--c-yellow-700) 22%, var(--c-space-900));
+  stroke: var(--c-yellow-400);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  filter: drop-shadow(0 0 12px var(--c-yellow-600));
+}
+.tr-check {
+  stroke: var(--c-yellow-300);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+}
+.tr-iso-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--c-yellow-400) 45%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 3 9;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: spin 40s linear infinite;
+}
+.tr-badge__a {
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  fill: var(--color-text);
+}
+.tr-badge__b {
+  font-size: 12px;
+  fill: var(--color-text-muted);
+}
+
+[data-state]:not([data-state='idle']) .tr-hex {
+  animation: tr-pop 0.9s var(--ease-out) 0.5s backwards;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+[data-state]:not([data-state='idle']) .tr-badge--sf text {
+  animation: tr-fade 0.7s ease-out 0.9s backwards;
+}
+[data-state]:not([data-state='idle']) .tr-star {
+  animation:
+    tr-fade 0.6s ease-out backwards,
+    twinkle 3.2s ease-in-out infinite;
+  animation-delay: calc(0.6s + var(--i) * 0.14s), calc(1.6s + var(--i) * 0.5s);
+}
+[data-state]:not([data-state='idle']) .tr-const__line {
+  animation: fde-draw 1.6s var(--ease-out) 0.9s backwards;
+}
+[data-state]:not([data-state='idle']) .tr-bridge {
+  animation: fde-draw 0.9s var(--ease-out) 1.3s backwards;
+}
+[data-state]:not([data-state='idle']) .tr-bridge-pulse {
+  animation: fde-flow 2.4s linear 2.2s infinite;
+}
+[data-state]:not([data-state='idle']) .tr-shield {
+  animation: fde-draw 1.2s var(--ease-out) 1.5s backwards;
+}
+[data-state]:not([data-state='idle']) .tr-check {
+  animation: fde-draw 0.7s var(--ease-out) 2.4s backwards;
+}
+[data-state]:not([data-state='idle']) .tr-badge--iso text {
+  animation: tr-fade 0.7s ease-out 2.2s backwards;
+}
+[data-state]:not([data-state='idle']) .tr-iso-ring {
+  animation: spin 40s linear infinite, tr-fade 0.8s ease-out 1.8s backwards;
+}
+@keyframes tr-pop {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+@keyframes tr-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ═══ ⑤ 行動呼籲 ═══════════════════════════════════════════════════ */
+.cta {
+  position: relative;
+  max-width: 44rem;
+}
+.cta__title {
+  font-size: var(--fs-3xl);
+}
+.cta-rings {
+  position: absolute;
+  right: 4vw;
+  top: 50%;
+  width: min(48vmin, 520px);
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  pointer-events: none;
+}
+.cta-rings i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-strong);
+}
+.cta-rings i:nth-child(2) {
+  inset: 16%;
+  border-color: color-mix(in srgb, var(--c-blue-500) 40%, transparent);
+}
+.cta-rings i:nth-child(3) {
+  inset: 34%;
+  border-color: color-mix(in srgb, var(--c-yellow-400) 45%, transparent);
+  background: radial-gradient(circle, color-mix(in srgb, var(--c-yellow-400) 18%, transparent), transparent 70%);
+}
+[data-state]:not([data-state='idle']) .cta-rings i {
+  animation: cta-pulse 5s ease-in-out infinite;
+}
+[data-state]:not([data-state='idle']) .cta-rings i:nth-child(2) {
+  animation-delay: -1.6s;
+}
+[data-state]:not([data-state='idle']) .cta-rings i:nth-child(3) {
+  animation-delay: -3.2s;
+}
+@keyframes cta-pulse {
+  0%,
+  100% {
+    scale: 1;
+    opacity: 0.9;
+  }
+  50% {
+    scale: 1.06;
+    opacity: 0.45;
+  }
+}
+
+/* ═══ RWD ══════════════════════════════════════════════════════════ */
+
+/* 平板：兩欄改單欄，軌道 / 圖示縮小置中 */
+@media (max-width: 960px) {
+  .split,
+  #ecosystem .split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+  .hero-orbit {
+    right: -28vmax;
+    opacity: 0.5;
+  }
+  .eco-orbit {
+    --stage: min(86vw, 40svh, 460px);
+  }
+  .fde-diagram svg,
+  .trust-diagram svg {
+    max-height: 32svh;
+  }
+  .cta-rings {
+    right: -14vw;
+    opacity: 0.5;
+  }
+  /* 平板 / 手機的簡介面板留在軌道下方（DOM 順序：文字在前，所以把軌道排到面板之前） */
+  #ecosystem .eco-orbit {
+    order: -1;
+  }
+  #ecosystem .stack-lg {
+    order: 1;
+  }
+}
+
+/* 手機：降低動畫複雜度、縮小留白、隱藏次要文字 */
+@media (max-width: 720px) {
+  /* 卡片光帶在手機保持靜態 */
+  [data-state] :is(.planet-info.card, .trust-item.card, .fde-step)::after {
+    animation: none !important;
+  }
+  /* 主標題縮小到 390px 寬也能一行放下（逐字切分的 .split-char 不受影響） */
+  .hero .display {
+    font-size: min(var(--fs-display), 10vw);
+    white-space: nowrap;
+  }
+  .home-hint {
+    bottom: var(--sp-3);
+  }
+  .home-hint__text {
+    display: none;
+  }
+  .hero-orbit {
+    opacity: 0.35;
+  }
+  .hero-orbit i:nth-child(2) {
+    display: none;
+  }
+  .hero__sub {
+    font-size: var(--fs-base);
+  }
+
+  .eco-orbit {
+    --stage: min(88vw, 38svh, 380px);
+  }
+  .eco-orbit .ring--3 .ring__spin {
+    border-style: solid;
+  }
+  /* 手機只顯示被選取行星的名稱，避免標籤互相覆蓋 */
+  .pl__name {
+    display: none;
+  }
+  .pl__btn[aria-pressed='true'] .pl__name {
+    display: block;
+  }
+  .planet-info {
+    padding: var(--sp-4);
+  }
+  .ecosystem__lead,
+  .ecosystem__cta {
+    display: none;
+  }
+
+  .fde__lead {
+    font-size: var(--fs-sm);
+  }
+  .fde-steps {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-2) var(--sp-4);
+  }
+  .fde-step {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .fde-step__d {
+    display: none;
+  }
+  .fde-diagram {
+    order: 1;
+  }
+  .fde-pulse,
+  .fde-core__halo {
+    display: none;
+  }
+
+  .trust-item {
+    padding: var(--sp-3) var(--sp-4);
+  }
+  .trust-item__d {
+    font-size: var(--fs-xs);
+  }
+  .tr-const,
+  .tr-bridge-pulse {
+    animation: none;
+  }
+  .tr-bridge-pulse {
+    display: none;
+  }
+
+  .cta-rings {
+    right: -30vw;
+    opacity: 0.35;
+  }
+  .cta__title {
+    font-size: var(--fs-2xl);
+  }
+}
+
+/* 矮螢幕（小手機 / 橫放 / 矮筆電）：再收緊，確保一屏放得下 */
+@media (max-height: 800px) {
+  .ecosystem__lead,
+  .fde__lead,
+  .trust__lead {
+    display: none;
+  }
+}
+@media (max-height: 800px) and (max-width: 960px) {
+  .fde-diagram svg,
+  .trust-diagram svg {
+    max-height: 26svh;
+  }
+}
+@media (max-height: 740px) {
+  .eco-orbit {
+    --stage: min(80vw, 34svh, 340px);
+  }
+}
+@media (max-height: 640px) {
+  #ecosystem .eyebrow,
+  #fde .eyebrow,
+  #trust .eyebrow {
+    display: none;
+  }
+  .fde-steps {
+    display: none;
+  }
+  .trust-item__d {
+    display: none;
+  }
+}
+
+/* ═══ prefers-reduced-motion：全部降為靜態（屏切換由引擎改為淡入淡出） ═══ */
+@media (prefers-reduced-motion: reduce) {
+  .hero-orbit i,
+  .home-hint__mouse i,
+  .home-hint__chev,
+  .ring__spin,
+  .pl__btn,
+  .tr-const,
+  .tr-iso-ring,
+  [data-state] .ring,
+  [data-state] .orbit__core,
+  [data-state] .fde-node,
+  [data-state] .fde-line,
+  [data-state] .fde-pulse,
+  [data-state] .fde-core,
+  [data-state] .fde-core__halo,
+  [data-state] .fde-step,
+  [data-state] .tr-hex,
+  [data-state] .tr-star,
+  [data-state] .tr-const__line,
+  [data-state] .tr-bridge,
+  [data-state] .tr-bridge-pulse,
+  [data-state] .tr-shield,
+  [data-state] .tr-check,
+  [data-state] .tr-badge text,
+  [data-state] .tr-iso-ring,
+  [data-state] .cta-rings i,
+  [data-state] :is(.planet-info.card, .trust-item.card, .fde-step)::after {
+    animation: none !important;
+  }
+  /* 行星不再公轉，所以不需要反向自轉：直接回到擺放角度的反向，文字保持正向 */
+  .pl__btn {
+    rotate: calc(var(--a) * -1);
+  }
+  .pl__btn,
+  .planet-info__item,
+  .home-hint {
+    transition-duration: 0.01ms;
+  }
+  .fde-pulse,
+  .tr-bridge-pulse {
+    display: none;
+  }
+}

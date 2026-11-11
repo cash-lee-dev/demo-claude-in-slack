@@ -6,7 +6,7 @@ May4s 伊原力科技（Salesforce / Slack / Agentforce 顧問，主張「企業
 
 - 純前端、靜態輸出，沒有後端；目前只有繁體中文。
 - 風格：深色科技風（底色 `#030712`、品牌黃 `#ffd400`、品牌藍 `#00a1e0`、Noto Sans TC），**不是**霓虹賽博龐克；用動態與「浩瀚星空」營造深度。
-- CTCC-13（本文件描述的範圍）只建立**基礎建設**：Astro 專案、設計 token、共用版型（導覽列 / 頁尾 / 屏數點）、星空背景、整頁切換引擎、頁面間轉場、共用互動元件。`/`、`/solutions/`、`/contact/` 只是驗證引擎用的示範頁，正式設計由 CTCC-14（首頁）、CTCC-15（解決方案）、CTCC-16（聯絡）接手，它們都重用這裡的「屏」元件與 API。
+- CTCC-13（本文件描述的範圍）只建立**基礎建設**：Astro 專案、設計 token、共用版型（導覽列 / 頁尾 / 屏數點）、星空背景、整頁切換引擎、頁面間轉場、共用互動元件。`/solutions/`、`/contact/` 目前只是驗證引擎用的示範頁，正式設計由 CTCC-15（解決方案）、CTCC-16（聯絡）接手，它們都重用這裡的「屏」元件與 API。首頁 `/` 已由 CTCC-14 完成（見下方「首頁」）。
 
 ## 使用的技術
 
@@ -36,13 +36,14 @@ src/
     Starfield.astro            CSS 星雲 / CSS 星空 / <canvas>（transition:persist）
     FxLayer.astro              自訂游標 + 星塵拖尾層（transition:persist）
   data/site.ts                 導覽 / 頁尾連結、解決方案清單、url() helper
-  pages/                       index.astro、solutions/index.astro、contact/index.astro（CTCC-13 示範頁）
+  pages/                       index.astro（CTCC-14 正式首頁）、solutions/index.astro、contact/index.astro（CTCC-13 示範頁）
   styles/
     tokens.css                 設計 token（唯一事實來源）
     base.css                   reset、排版、a11y
     screens.css                屏版面 / 狀態、View Transition CSS、reduced-motion 轉場
     components.css             星空層、按鈕、卡片、導覽列、屏數點、頁尾、游標層
-    demo.css                   示範頁樣式（正式頁面會取代，可刪）
+    home.css                   首頁（CTCC-14）五個整屏的樣式
+    demo.css                   /solutions/、/contact/ 示範頁樣式（CTCC-15 / 16 完成後可刪）
   scripts/
     main.ts                    全站進入點（只執行一次）；每頁要重做的事在 bootPage()
     gsap.ts                    GSAP 外掛註冊（其他模組一律從這裡 import）
@@ -51,6 +52,7 @@ src/
     starfield.ts               星空控制器：idle 後載入、WebGL 偵測、CSS 退路、視差
     starfield-gl.ts            Three.js 星空（動態 import 的 chunk）
     cursor.ts / magnetic.ts / hover-glow.ts / pointer.ts   共用互動元件
+    home.ts                    首頁屏內互動（軌道行星選取與視差、向下探索）
     navbar.ts                  下拉選單 / 手機選單
     chrome.ts                  頁尾隨屏顯示、切屏時收起下拉
     transitions.ts             View Transition 的 JS 輔助
@@ -172,6 +174,25 @@ import { onScreensReady, getEngine } from '../scripts/screens';
 </script>
 ```
 
+## 首頁（CTCC-14）
+
+`src/pages/index.astro` 由五個 `<Screen>` 組成，樣式在 `styles/home.css`（只用 token），互動在 `scripts/home.ts`：
+
+| 屏 id | 內容 |
+| --- | --- |
+| `hero` | 星空開場：標題 `data-split="chars"` 逐字、副標、磁吸 CTA（`data-magnetic`）、可點擊的「向下探索」提示（呼叫 `engine.next()`） |
+| `ecosystem` | Salesforce 生態系軌道：三圈軌道、七顆行星（`<button data-planet>`）。hover（滑鼠）/ 點選（觸控）/ 鍵盤聚焦會放大行星並切換簡介面板（`data-planet-info`）；軌道各層依 `data-par` 做滑鼠視差（僅 `(hover: hover) and (pointer: fine)` 且非 reduced-motion） |
+| `fde` | Forward Deployed Engineers：SVG 節點由兩側匯聚到「共創價值」、連線描繪與脈衝、四個步驟依序出現 |
+| `trust` | 認證與信任：Salesforce 認證團隊徽章 + 星座（SVG 連線 / 閃爍）+ ISO/IEC 27001:2022 盾牌徽章（描繪 + 打勾） |
+| `cta` | 行動呼籲（最後一屏）：預約諮詢（`url('/contact/')`）；底部由 `[data-screen]:last-child` 的 `--footer-reserve` 留給固定頁尾 |
+
+- **動畫觸發**：屏內 CSS 動畫只在 `[data-state]:not([data-state='idle'])`（進場中 / 作用中）套用，離開變 idle 後重設，下次進場重播；元素的基礎狀態就是最終樣子（動畫用 `backwards` 填充），所以 `prefers-reduced-motion`（`animation: none`）自然得到完整的靜態畫面。
+- **一屏放得下**：舞台 / 圖示大小受 `svh` 限制（`--stage`、SVG `max-height`），並在 `max-height: 800 / 740 / 640px` 與手機寬度逐步隱藏次要文字（lead、步驟說明、eyebrow）。
+- **手機簡化**：隱藏脈衝光點、星座旋轉、行星名稱（只顯示被選取者）、部分裝飾環；沒有視差與磁吸；行星以點選展開。
+- **卡片樣式**：`.planet-info.card`、`.trust-item.card`、`.fde-step` 在 `home.css` 共用一組覆寫（不動全域 `.card`）：左上品牌藍漸層 + 右上黃色微光的背景、`::before` 以 mask 做的上亮下暗漸層邊、`::after` 底部藍色光帶（只動 `transform`，12s alternate 緩慢左右漂移，只在該屏非 idle 時播放；手機與 reduced-motion 為靜態）。
+- **class 命名要避開 `demo.css` 的全域名稱**：`demo.css` 仍有全域 `.orbit`、`.scroll-hint`，所以首頁用 `.eco-orbit`、`.home-hint`，不要再用 `.orbit` / `.scroll-hint`（`demo.css` 刪除前會互相覆蓋樣式）。
+- 軌道行星使用獨立的 `rotate` / `scale` / `translate` 屬性（不用 `transform`），因此視差（GSAP 寫 `transform`）、公轉、反向自轉與放大互不覆蓋。
+
 ## 星空背景
 
 - `<Starfield>`：CSS 星雲（三團漸層緩慢漂移）+ CSS 星空（`box-shadow` 星點，建置時以種子亂數產生）+ `<canvas>`。首屏只靠 CSS 就有完整背景，文字立即可讀。
@@ -192,7 +213,7 @@ import { onScreensReady, getEngine } from '../scripts/screens';
 - **新增頁面**：在 `src/pages/xxx/index.astro` 用 `BaseLayout` + `<Screen>`；在 `src/data/site.ts` 加導覽項目；站內連結用 `url('/xxx/')`（目錄型路徑以 `/` 結尾）。
 - **新增一屏**：加一個 `<Screen id="唯一id" label="屏數點文字">`；要被導覽深連結就把 id 放進 `site.ts`。
 - **新增解決方案深連結**：`site.ts` 的 `industrySolutions` / `softwareSolutions` 加一筆（`id` 對應解決方案頁的屏 id）；下拉選單與示範頁會自動更新。
-- **替換示範頁**：CTCC-14/15/16 直接改寫對應 `pages/*.astro`，保留 `<Screen>` 用法；完成後可刪除 `styles/demo.css`。
+- **替換示範頁**：CTCC-15/16 直接改寫對應 `pages/*.astro`，保留 `<Screen>` 用法；兩頁都完成後可刪除 `styles/demo.css`（首頁已不使用其中的樣式，但檔案仍被 `/solutions/`、`/contact/` 使用）。
 
 ## 效能與無障礙規則
 

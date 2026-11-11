@@ -1,92 +1,231 @@
 ---
+/**
+ * 首頁（CTCC-14）：五個整屏
+ *   1 hero      星空開場主視覺（逐字標題、磁吸 CTA、向下提示）
+ *   2 ecosystem Salesforce 生態系軌道行星（滑鼠視差、hover / 點選 / 聚焦放大並顯示簡介）
+ *   3 fde       Forward Deployed Engineers 與客戶共建價值（節點匯聚、連線、步驟依序出現）
+ *   4 trust     認證與信任（Salesforce 認證團隊 + ISO/IEC 27001:2022 星座 / 徽章動畫）
+ *   5 cta       行動呼籲（最後一屏，底部為固定頁尾預留 --footer-reserve）
+ * 樣式：src/styles/home.css；互動：src/scripts/home.ts
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Screen from '../components/Screen.astro';
 import { url } from '../data/site';
+
+/** 軌道行星：ring 1 內圈、2 中圈、3 外圈；--a 為起始角度，pc 為行星色（token） */
+const planets = [
+  { id: 'agentforce', ring: 1, angle: 20, color: 'var(--c-yellow-400)', name: 'Agentforce', tag: '智慧層', desc: 'Sales / Service / Ops Agent 被 Slack 召喚，向 Salesforce 落地，處理常態作業。' },
+  { id: 'data-cloud', ring: 1, angle: 200, color: 'var(--c-blue-200)', name: 'Data Cloud', tag: '數據雲', desc: '統一記憶體：把 ERP / Web / Social 資料同步成客戶 360，Agent 才有完整脈絡。' },
+  { id: 'sales', ring: 2, angle: 70, color: 'var(--c-blue-400)', name: 'Sales Cloud', tag: '銷售雲', desc: '從商機、報價到成交的銷售流程一次管理，讓團隊把時間花在客戶身上。' },
+  { id: 'service', ring: 2, angle: 190, color: 'var(--c-blue-300)', name: 'Service Cloud', tag: '服務雲', desc: '統一受理工單、保固與現場服務，讓客戶服務更快、更一致。' },
+  { id: 'slack', ring: 2, angle: 310, color: 'var(--c-blue-100)', name: 'Slack', tag: 'System of Work', desc: '員工面向的工作面：對話、決策、Agent 召喚、簽核、推播全在這裡發生。' },
+  { id: 'marketing-commerce', ring: 3, angle: 120, color: 'var(--c-blue-500)', name: 'Marketing & Commerce', tag: '行銷雲 · 電商雲', desc: '串連行銷旅程與電商交易，打造從觸及、轉換到回購的完整客戶體驗。' },
+  { id: 'mulesoft-tableau', ring: 3, angle: 300, color: 'var(--c-yellow-200)', name: 'MuleSoft & Tableau', tag: '整合與分析', desc: '串接企業既有系統，並以視覺化分析呈現洞察，讓資料真正流動起來。' },
+];
+
+const fdeSteps = [
+  { n: '01', t: '商業策略顧問', d: '從業務痛點出發，完整走完 ROI 效益路徑。' },
+  { n: '02', t: '共創原型', d: '打造「概念驗證延伸版」示範專案，不只驗證技術可行。' },
+  { n: '03', t: '平台導入共建', d: 'Slack + Salesforce Headless + Agentforce，與你共建、共構，逐週上線。' },
+  { n: '04', t: '維運與 CoE', d: '建立內部 Agent CoE，讓 Agentic OS 持續成長。' },
+];
 ---
 
-<!--
-  CTCC-13 示範首頁：只用來驗證整頁切換引擎與共用版型。
-  正式首頁設計由 CTCC-14 取代（保留 <Screen> 的用法即可）。
--->
 <BaseLayout>
+  <!-- ① 星空開場 -->
   <Screen id="hero" label="首屏">
-    <div class="orbit" aria-hidden="true" data-enter="fade" data-depth="0.4">
+    <div class="hero-orbit" aria-hidden="true" data-enter="fade" data-depth="0.4">
       <i></i><i></i><i></i><b></b>
     </div>
     <div class="stack-lg hero">
-      <p class="eyebrow" data-enter>May4s 伊原力科技</p>
+      <p class="eyebrow" data-enter>打造你的智慧代理型企業</p>
       <h1 class="display" data-split="chars">企業 Agentic OS</h1>
-      <p class="lead" data-split="lines">
-        以 Salesforce、Slack 與 Agentforce，讓人與 AI 代理人在同一個工作空間協作，把企業營運變成會自己運轉的系統。
+      <p class="lead hero__sub" data-split="lines">
+        No.1 Slack 合作夥伴，我們把 Slack、Salesforce、Agentforce 串接成一套能實際推動業務前進的系統。
       </p>
       <div class="row" data-enter>
         <a class="btn btn--primary" href={url('/solutions/')} data-magnetic>探索解決方案 <span class="btn__arrow" aria-hidden="true">→</span></a>
         <a class="btn" href={url('/contact/')} data-magnetic>聯絡我們</a>
       </div>
-      <p class="chip" data-enter="fade"><i></i>Foundation demo · 版型驗證用，正式內容見 CTCC-14</p>
     </div>
-    <p class="scroll-hint" data-enter="fade" aria-hidden="true"><span></span>SCROLL</p>
+    <button class="home-hint" type="button" data-scroll-next data-enter="fade" aria-label="向下前往下一屏">
+      <span class="home-hint__mouse" aria-hidden="true"><i></i></span>
+      <span class="home-hint__text">向下探索</span>
+      <svg class="home-hint__chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
   </Screen>
 
-  <Screen id="capabilities" label="核心能力">
-    <div class="stack-lg">
-      <p class="eyebrow" data-enter>Capabilities</p>
-      <h2 class="h2" data-split="lines">三個平台，一個協作的大腦</h2>
-      <div class="grid-3">
-        <article class="card" data-enter data-depth="1.2">
-          <h3 class="h3">Salesforce</h3>
-          <p class="muted">以客戶為中心的銷售、服務與行銷（佔位內容）。</p>
-        </article>
-        <article class="card" data-enter data-depth="1.6">
-          <h3 class="h3">Slack</h3>
-          <p class="muted">團隊、資料與流程集中在同一個頻道（佔位內容）。</p>
-        </article>
-        <article class="card" data-enter data-depth="2">
-          <h3 class="h3">Agentforce</h3>
-          <p class="muted">能理解情境、主動行動的 AI 代理人（佔位內容）。</p>
-        </article>
+  <!-- ② Salesforce 生態系軌道行星 -->
+  <Screen id="ecosystem" label="Salesforce 生態系">
+    <div class="split">
+      <div class="stack-lg">
+        <p class="eyebrow" data-enter>Salesforce Ecosystem</p>
+        <h2 class="h2" data-split="lines">一個以 Salesforce 為核心的生態系</h2>
+        <p class="lead ecosystem__lead" data-split="lines">以 Salesforce 為底座，串接數據、電商、Slack、銷售、服務、行銷與 Agentforce，讓前台團隊協作。</p>
+        <div class="planet-info card" id="planet-info" aria-live="polite" data-enter data-glow>
+          {planets.map((p, i) => (
+            <div class="planet-info__item" data-planet-info={p.id} data-active={i === 0 ? '' : undefined} style={`--pc:${p.color}`}>
+              <p class="planet-info__tag"><i></i>{p.tag}</p>
+              <h3 class="h3">{p.name}</h3>
+              <p class="muted">{p.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div class="row ecosystem__cta" data-enter>
+          <a class="btn btn--primary" href={url('/solutions/')} data-magnetic>查看解決方案 <span class="btn__arrow" aria-hidden="true">→</span></a>
+        </div>
+      </div>
+
+      <div class="eco-orbit" data-orbit data-enter="scale" data-depth="0.6" role="group" aria-label="Salesforce 生態系軌道圖：以星球代表產品群組，可用滑鼠移入、點選或鍵盤聚焦查看簡介">
+        {[1, 2, 3].map((ring) => (
+          <div class={`ring ring--${ring}`} data-par={String([0, 9, 15, 22][ring])}>
+            <div class="ring__spin">
+              {planets.filter((p) => p.ring === ring).map((p) => (
+                <div class="pl" style={`--a:${p.angle}deg;--pc:${p.color}`}>
+                  <button
+                    class="pl__btn"
+                    type="button"
+                    data-planet={p.id}
+                    aria-controls="planet-info"
+                    aria-pressed={p.id === planets[0].id ? 'true' : 'false'}
+                    aria-label={`${p.name}，${p.tag}`}
+                  >
+                    <span class="pl__dot"></span>
+                    <span class="pl__name">{p.name}</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div class="orbit__core" data-par="5" aria-hidden="true"><span>Salesforce<br />生態系</span></div>
       </div>
     </div>
   </Screen>
 
-  <Screen id="solutions" label="解決方案">
-    <div class="stack-lg">
-      <p class="eyebrow" data-enter>Solutions</p>
-      <h2 class="h2" data-split="lines">從產業場景到軟體平台</h2>
-      <p class="lead" data-split="lines">七個解決方案涵蓋製造電商、售後服務、通路管理，以及 Salesforce、Slack 等核心平台（佔位內容）。</p>
-      <div class="row" data-enter>
-        <span class="chip"><i></i>客製化製造電商</span>
-        <span class="chip"><i></i>售後服務管理</span>
-        <span class="chip"><i></i>經銷商與代理商管理</span>
-        <span class="chip"><i></i>Salesforce CRM</span>
-        <span class="chip"><i></i>Slack</span>
+  <!-- ③ Forward Deployed Engineers × 客戶共建價值 -->
+  <Screen id="fde" label="與客戶共建價值">
+    <div class="split split--fde">
+      <div class="stack-lg">
+        <p class="eyebrow" data-enter>Forward Deployed Engineers</p>
+        <h2 class="h2" data-split="lines">不是交付系統，而是共建 Agentic OS</h2>
+        <p class="lead fde__lead" data-split="lines">工程師與你的業務一起共建、共構，留下能持續造 Agent 的內部能力。</p>
+        <ol class="fde-steps" data-enter="fade">
+          {fdeSteps.map((s, i) => (
+            <li class="fde-step" style={`--i:${i}`}>
+              <span class="fde-step__n">{s.n}</span>
+              <div>
+                <h3 class="fde-step__t">{s.t}</h3>
+                <p class="fde-step__d">{s.d}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </div>
-      <div class="row" data-enter>
-        <a class="btn btn--primary" href={url('/solutions/')} data-magnetic>查看全部解決方案 <span class="btn__arrow" aria-hidden="true">→</span></a>
-      </div>
+
+      <figure class="fde-diagram" data-enter="fade" data-depth="0.8">
+        <svg viewBox="0 0 400 300" role="img" aria-label="客戶團隊的業務痛點、現有資料、營運流程，與 FDE 的顧問、工程、AI 代理人，共同匯聚成共創價值">
+          <g class="fde-lines" fill="none">
+            <path class="fde-line fde-line--c" style="--i:0" pathLength="1" d="M70 62 L200 150" />
+            <path class="fde-line fde-line--c" style="--i:1" pathLength="1" d="M48 150 L200 150" />
+            <path class="fde-line fde-line--c" style="--i:2" pathLength="1" d="M70 238 L200 150" />
+            <path class="fde-line fde-line--f" style="--i:3" pathLength="1" d="M330 62 L200 150" />
+            <path class="fde-line fde-line--f" style="--i:4" pathLength="1" d="M352 150 L200 150" />
+            <path class="fde-line fde-line--f" style="--i:5" pathLength="1" d="M330 238 L200 150" />
+            <path class="fde-pulse fde-pulse--c" style="--i:0" pathLength="1" d="M70 62 L200 150" />
+            <path class="fde-pulse fde-pulse--c" style="--i:1" pathLength="1" d="M48 150 L200 150" />
+            <path class="fde-pulse fde-pulse--c" style="--i:2" pathLength="1" d="M70 238 L200 150" />
+            <path class="fde-pulse fde-pulse--f" style="--i:3" pathLength="1" d="M330 62 L200 150" />
+            <path class="fde-pulse fde-pulse--f" style="--i:4" pathLength="1" d="M352 150 L200 150" />
+            <path class="fde-pulse fde-pulse--f" style="--i:5" pathLength="1" d="M330 238 L200 150" />
+          </g>
+          <text class="fde-head fde-head--c" x="62" y="20" text-anchor="middle">客戶團隊</text>
+          <text class="fde-head fde-head--f" x="338" y="20" text-anchor="middle">FDE 團隊</text>
+
+          <g class="fde-node fde-node--c" style="--i:0;--fx:-70px;--fy:-40px"><circle cx="70" cy="62" r="9" /><text x="70" y="90" text-anchor="middle">業務痛點</text></g>
+          <g class="fde-node fde-node--c" style="--i:1;--fx:-70px;--fy:0px"><circle cx="48" cy="150" r="9" /><text x="48" y="178" text-anchor="middle">現有資料</text></g>
+          <g class="fde-node fde-node--c" style="--i:2;--fx:-70px;--fy:40px"><circle cx="70" cy="238" r="9" /><text x="70" y="266" text-anchor="middle">營運流程</text></g>
+          <g class="fde-node fde-node--f" style="--i:3;--fx:70px;--fy:-40px"><circle cx="330" cy="62" r="9" /><text x="330" y="90" text-anchor="middle">顧問</text></g>
+          <g class="fde-node fde-node--f" style="--i:4;--fx:70px;--fy:0px"><circle cx="352" cy="150" r="9" /><text x="352" y="178" text-anchor="middle">工程</text></g>
+          <g class="fde-node fde-node--f" style="--i:5;--fx:70px;--fy:40px"><circle cx="330" cy="238" r="9" /><text x="330" y="266" text-anchor="middle">AI 代理人</text></g>
+
+          <g class="fde-core">
+            <circle class="fde-core__halo" cx="200" cy="150" r="46" />
+            <circle class="fde-core__disc" cx="200" cy="150" r="36" />
+            <text x="200" y="155" text-anchor="middle">共創價值</text>
+          </g>
+        </svg>
+      </figure>
     </div>
   </Screen>
 
-  <Screen id="principles" label="為什麼是我們">
-    <div class="stack-lg">
-      <p class="eyebrow" data-enter>Why May4s</p>
-      <h2 class="h2" data-split="lines">把複雜留給我們，把流暢留給團隊</h2>
-      <div class="grid-3">
-        <div class="stack" data-enter data-depth="1.2"><p class="num">01</p><h3 class="h3">顧問 × 實作</h3><p class="muted">同一個團隊從需求訪談做到上線與維運（佔位內容）。</p></div>
-        <div class="stack" data-enter data-depth="1.6"><p class="num">02</p><h3 class="h3">資安優先</h3><p class="muted">以 ISO 27001 的標準管理每一份客戶資料（佔位內容）。</p></div>
-        <div class="stack" data-enter data-depth="2"><p class="num">03</p><h3 class="h3">AI 就緒</h3><p class="muted">資料與流程先整理好，AI 代理人才跑得穩（佔位內容）。</p></div>
+  <!-- ④ 認證與信任 -->
+  <Screen id="trust" label="認證與信任">
+    <div class="split split--trust">
+      <div class="stack-lg">
+        <p class="eyebrow" data-enter>Certified &amp; Trusted</p>
+        <h2 class="h2" data-split="lines">通過驗證的團隊，值得託付的夥伴</h2>
+        <p class="lead trust__lead" data-split="lines">專業與資安，是我們與客戶共事的基本功。</p>
+        <ul class="trust-list">
+          <li class="trust-item card" data-enter data-glow>
+            <h3 class="trust-item__t">Salesforce Summit 合作夥伴</h3>
+            <p class="trust-item__d">最高夥伴等級，連續兩年榮獲 Salesforce Top Performing Award。</p>
+          </li>
+          <li class="trust-item card" data-enter data-glow>
+            <h3 class="trust-item__t">ISO/IEC 27001:2022</h3>
+            <p class="trust-item__d">我們通過 ISO/IEC 27001:2022 認證，資訊安全管理涵蓋 CRM 導入與開發流程，全程守護客戶資料。</p>
+          </li>
+        </ul>
       </div>
+
+      <figure class="trust-diagram" data-enter="fade" data-depth="0.8">
+        <svg viewBox="0 0 440 290" role="img" aria-label="Salesforce Summit 合作夥伴徽章與 ISO/IEC 27001:2022 認證徽章，以星座連線相連">
+          <!-- 星座：五顆星繞著 Salesforce 認證徽章 -->
+          <g class="tr-const">
+            <polygon class="tr-const__line" points="130,78 208,134.7 178.2,226.3 81.8,226.3 52,134.7" pathLength="1" />
+            <circle class="tr-star" style="--i:0" cx="130" cy="78" r="3.5" />
+            <circle class="tr-star" style="--i:1" cx="208" cy="134.7" r="3.5" />
+            <circle class="tr-star" style="--i:2" cx="178.2" cy="226.3" r="3.5" />
+            <circle class="tr-star" style="--i:3" cx="81.8" cy="226.3" r="3.5" />
+            <circle class="tr-star" style="--i:4" cx="52" cy="134.7" r="3.5" />
+          </g>
+          <!-- 兩枚徽章之間的連線 -->
+          <path class="tr-bridge" pathLength="1" d="M180 160 L272 160" fill="none" />
+          <path class="tr-bridge-pulse" pathLength="1" d="M180 160 L272 160" fill="none" />
+          <!-- Salesforce 認證團隊徽章 -->
+          <g class="tr-badge tr-badge--sf">
+            <polygon class="tr-hex" points="130,104 178.5,132 178.5,188 130,216 81.5,188 81.5,132" />
+            <text x="130" y="158" text-anchor="middle" class="tr-badge__a">Salesforce</text>
+            <text x="130" y="178" text-anchor="middle" class="tr-badge__b">Summit 夥伴</text>
+          </g>
+          <!-- ISO 徽章 -->
+          <g class="tr-badge tr-badge--iso">
+            <circle class="tr-iso-ring" cx="320" cy="162" r="74" />
+            <path class="tr-shield" pathLength="1" d="M320 96 L366 112 V166 C366 196 346 216 320 228 C294 216 274 196 274 166 V112 Z" />
+            <path class="tr-check" pathLength="1" d="M298 162 L313 177 L342 146" fill="none" />
+            <text x="320" y="262" text-anchor="middle" class="tr-badge__a">ISO/IEC 27001:2022</text>
+            <text x="320" y="280" text-anchor="middle" class="tr-badge__b">資訊安全全程有保障</text>
+          </g>
+        </svg>
+      </figure>
     </div>
   </Screen>
 
+  <!-- ⑤ 行動呼籲（最後一屏：底部留給固定頁尾） -->
   <Screen id="cta" label="開始對話">
-    <div class="stack-lg">
+    <div class="cta-rings" aria-hidden="true" data-enter="fade" data-depth="0.4"><i></i><i></i><i></i></div>
+    <div class="stack-lg cta">
       <p class="eyebrow" data-enter>Let's talk</p>
-      <h2 class="h2" data-split="lines">準備好打造你的 Agentic OS 了嗎？</h2>
+      <h2 class="h2 cta__title" data-split="lines">準備好打造你的 Agentic OS 了嗎？</h2>
+      <p class="lead" data-split="lines">告訴我們你的情境，May4s 的顧問與 FDE 團隊會與你並肩，把想法變成真正上線的系統。</p>
       <div class="row" data-enter>
-        <a class="btn btn--primary" href={url('/contact/')} data-magnetic>預約諮詢 <span class="btn__arrow" aria-hidden="true">→</span></a>
-        <a class="btn" href={url('/solutions/')} data-magnetic>先看解決方案</a>
+        <a class="btn btn--primary btn--lg" href={url('/contact/')} data-magnetic>立即諮詢 <span class="btn__arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn--lg" href={url('/solutions/')} data-magnetic>探索解決方案</a>
       </div>
     </div>
   </Screen>
 </BaseLayout>
+
+<script>
+  import '../scripts/home';
+</script>
