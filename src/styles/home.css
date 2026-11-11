@@ -180,7 +180,7 @@
 }
 .planet-info__item[data-active] {
   opacity: 1;
-  visibility: visible;
+  visibility: inherit; /* 跟隨所在的屏：離開的屏 idle 時（visibility: hidden）簡介也要隱藏，不可寫 visible */
   transform: none;
   transition-delay: 0s;
 }
@@ -202,13 +202,16 @@
 }
 
 /* 軌道舞台：正方形，大小同時受寬度與視窗高度（svh）限制，確保一屏放得下 */
-.orbit {
+.eco-orbit {
   --stage: min(44vw, 64svh, 620px);
   --pl: clamp(2.25rem, calc(var(--stage) * 0.105), 3.5rem); /* 行星直徑 */
   position: relative;
   justify-self: center;
   width: min(var(--stage), 100%); /* 不超出欄寬（手機有右側屏數點的留白） */
   aspect-ratio: 1;
+  /* 公轉中的旋轉方形會一層層撐大可捲動區域（#ecosystem 的 scrollHeight 超過視窗），在舞台邊界裁切；留 margin 給行星標籤 */
+  overflow: clip;
+  overflow-clip-margin: var(--sp-12);
 }
 .ring {
   position: absolute;
@@ -352,13 +355,13 @@
     color: var(--color-text);
   }
   /* 指標進入軌道區時暫停公轉，才好點選 / 瞄準 */
-  .orbit:hover .ring__spin,
-  .orbit:hover .pl__btn {
+  .eco-orbit:hover .ring__spin,
+  .eco-orbit:hover .pl__btn {
     animation-play-state: paused;
   }
 }
-.orbit:focus-within .ring__spin,
-.orbit:focus-within .pl__btn {
+.eco-orbit:focus-within .ring__spin,
+.eco-orbit:focus-within .pl__btn {
   animation-play-state: paused;
 }
 
@@ -787,7 +790,7 @@
     right: -28vmax;
     opacity: 0.5;
   }
-  .orbit {
+  .eco-orbit {
     --stage: min(86vw, 40svh, 460px);
   }
   .fde-diagram svg,
@@ -799,7 +802,7 @@
     opacity: 0.5;
   }
   /* 平板 / 手機的簡介面板留在軌道下方（DOM 順序：文字在前，所以把軌道排到面板之前） */
-  #ecosystem .orbit {
+  #ecosystem .eco-orbit {
     order: -1;
   }
   #ecosystem .stack-lg {
@@ -825,10 +828,10 @@
     font-size: var(--fs-base);
   }
 
-  .orbit {
+  .eco-orbit {
     --stage: min(88vw, 38svh, 380px);
   }
-  .orbit .ring--3 .ring__spin {
+  .eco-orbit .ring--3 .ring__spin {
     border-style: solid;
   }
   /* 手機只顯示被選取行星的名稱，避免標籤互相覆蓋 */
@@ -906,7 +909,7 @@
   }
 }
 @media (max-height: 740px) {
-  .orbit {
+  .eco-orbit {
     --stage: min(80vw, 34svh, 340px);
   }
 }
