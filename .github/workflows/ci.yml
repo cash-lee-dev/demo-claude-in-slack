@@ -19,13 +19,20 @@ jobs:
 
       - run: npm ci
 
-      - name: Build (dummy env, no secrets)
+      - name: Build
         run: npm run build
-        env:
-          VITE_AUTH_HASH_KEY: ci-dummy-hash-key
-          VITE_ADMIN_USERNAME: ci-admin
-          # HMAC-SHA-256('ci-dummy-hash-key', 'ci-dummy-password')
-          VITE_ADMIN_PASSWORD_HASH: f28614e5091d62cee3f3a8a4ec6aeca1b86511c116db3421d6373de142799e44
 
-      - name: Check single SPA entry point (index.html only)
-        run: test -f dist/index.html && test "$(find dist -maxdepth 1 -name "*.html" | wc -l)" -eq 1
+      - name: Check build output (dist 內要有三個頁面，且 Three.js 星空必須是 lazy chunk)
+        run: |
+          test -f dist/index.html
+          test -f dist/solutions/index.html
+          test -f dist/contact/index.html
+          # 所有站內資源都要帶 GitHub Pages 的 base path
+          grep -q '/demo-claude-in-slack/_astro/' dist/index.html
+          # Three.js 只能存在於獨立的 starfield-gl chunk（含 WebGLRenderer 的 JS 只准是它）
+          lazy=$(ls dist/_astro | grep -E '^starfield-gl\..*\.js$')
+          test -n "$lazy"
+          others=$(grep -l 'WebGLRenderer' dist/_astro/*.js | grep -v "dist/_astro/$lazy" || true)
+          if [ -n "$others" ]; then echo "Three.js 被打進首屏 bundle：$others"; exit 1; fi
+          # 任何頁面的 HTML 都不能 preload / 直接載入星空 chunk
+          if grep -l 'starfield-gl' dist/index.html dist/solutions/index.html dist/contact/index.html; then echo "HTML 直接引用了 starfield-gl"; exit 1; fi

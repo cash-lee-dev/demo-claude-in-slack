@@ -1,0 +1,28 @@
+---
+/**
+ * 「屏」元件：整頁切換引擎的最小單位。 ②③④ 的頁面一律用它組版。
+ *
+ * <Screen id="hero" label="首屏">
+ *   <h1 data-split="chars">標題</h1>          逐字入場（chars）/ 逐詞（words）/ 逐行遮罩（lines，預設）
+ *   <p data-enter>內文</p>                    整塊淡入 + 視差位移（data-enter="fade|scale" 變化）
+ *   <div data-depth="0.5">…</div>             視差深度倍率（預設 1，越大位移越多）
+ * </Screen>
+ *
+ * 屬性：
+ *   id      必填。同時是深連結 hash（/page/#id）與 screen:* 事件的識別
+ *   label   屏數點的 tooltip / aria-label
+ *   align   center（預設）| start | end：內容垂直對齊
+ * 內容必須在一個視窗高度內放得下（引擎不處理屏內捲動）。
+ */
+interface Props {
+  id: string;
+  label?: string;
+  align?: 'center' | 'start' | 'end';
+  class?: string;
+}
+const { id, label = id, align = 'center', class: className } = Astro.props;
+---
+
+<section id={id} data-screen={id} data-screen-label={label} data-align={align} aria-label={label} class={className}>
+  <div class="screen__inner"><slot /></div>
+</section>

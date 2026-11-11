@@ -1,0 +1,24 @@
+---
+import { footerLinks, SITE_NAME } from '../data/site';
+---
+
+<footer class="site-footer" id="site-footer" inert>
+  <div class="site-footer__inner">
+    <ul class="site-footer__links">
+      <li><a href={footerLinks.privacy.href} rel="noopener">{footerLinks.privacy.label}</a></li>
+      <li><a href={footerLinks.slackCases.href} rel="noopener" target="_blank">{footerLinks.slackCases.label}</a></li>
+      <li><a href={footerLinks.email.href}>{footerLinks.email.label}</a></li>
+    </ul>
+    <ul class="site-footer__social">
+      <li><a href={footerLinks.linkedin.href} rel="noopener" target="_blank">{footerLinks.linkedin.label}</a></li>
+      <li><a href={footerLinks.facebook.href} rel="noopener" target="_blank">{footerLinks.facebook.label}</a></li>
+    </ul>
+  </div>
+  <div class="site-footer__bottom">
+    <span class="iso-badge">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1l6 2.2v4.3c0 3.400-2.500 6-6 7.500-3.500-1.500-6-4.100-6-7.500V3.200L8 1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"></path><path d="M5.300 8.100 7.200 10l3.500-3.800" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      ISO 27001 資訊安全管理
+    </span>
+    <span>© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</span>
+  </div>
+</footer>

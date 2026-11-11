@@ -1,214 +1,204 @@
 # 專案架構
 
-> 本文件只記錄「專案目的」與「使用的技術」。
-
 ## 專案目的
 
-NEON//GRID 是一個賽博龐克霓虹風格的前端示範專案：整個系統需要登入，登入成功後進入首頁，首頁以巨大的故障風霓虹標題 **"This is Your World!"** 迎接使用者。所有頁面切換都有「雙開門」轉場。
+May4s 伊原力科技（Salesforce / Slack / Agentforce 顧問，主張「企業 Agentic OS」）官網的前端改版。
 
-- 純前端、沒有後端；帳號密碼完全在瀏覽器內驗證。
-- 資安是刻意被忽略的（環境變數會被打包進前端 bundle），重點在前端架構與視覺呈現。
+- 純前端、靜態輸出，沒有後端；目前只有繁體中文。
+- 風格：深色科技風（底色 `#030712`、品牌黃 `#ffd400`、品牌藍 `#00a1e0`、Noto Sans TC），**不是**霓虹賽博龐克；用動態與「浩瀚星空」營造深度。
+- CTCC-13（本文件描述的範圍）只建立**基礎建設**：Astro 專案、設計 token、共用版型（導覽列 / 頁尾 / 屏數點）、星空背景、整頁切換引擎、頁面間轉場、共用互動元件。`/`、`/solutions/`、`/contact/` 只是驗證引擎用的示範頁，正式設計由 CTCC-14（首頁）、CTCC-15（解決方案）、CTCC-16（聯絡）接手，它們都重用這裡的「屏」元件與 API。
 
 ## 使用的技術
 
 | 項目 | 技術 | 說明 |
 | --- | --- | --- |
-| UI 框架 | Vue 3（單檔元件、`<script setup>`） | 核心執行期依賴（另有 `vue-router`、`vue-i18n`） |
-| 多語系 | `vue-i18n`（Composition 模式） | 支援 `zh-TW` / `en`，字串放在 `src/locales/`，見「多語系（i18n）」 |
-| 建置工具 | Vite + `@vitejs/plugin-vue` | 開發伺服器與打包 |
-| 樣式 | Tailwind CSS v4（`tailwindcss` + `@tailwindcss/vite`） | 主題 token（配色、字型、動畫）定義在 `@theme`，以 utility class 撰寫樣式 |
-| 頁面模式 | SPA（單頁應用）+ `vue-router`（hash 模式） | 單一 `index.html` 入口與單一 Vue app，頁面是 `<router-view>` 內的 route view |
-| 驗證 | Web Crypto API（HMAC-SHA-256） | 以 hash key 對密碼做雜湊後比對，session 存在 `localStorage` |
-| 設定 | Vite 環境變數（`VITE_*`） | hash key、管理員帳號與密碼 hash 皆由環境變數提供 |
-| 視覺特效 | CSS 動畫與 Canvas 2D | 不使用額外的動畫或圖形套件 |
-| 部署 | GitHub Pages + GitHub Actions | push 到 `main` 時自動建置並部署；建置用的環境變數來自 GitHub Environment `Prod` |
-| 執行環境 | Node.js 20 以上、npm | `vue-i18n` / `@intlify/*` 在自己的 `engines` 宣告 `node >= 22`；專案**刻意維持 Node 20**（`package.json` engines、CI / deploy workflow 都是 20，由專案擁有者決定）。Node 20 上 `npm ci` 只會印出 `EBADENGINE` 警告，不會失敗，建置與執行都正常 |
+| 框架 | Astro 5（`output: 'static'`） | 刻意停在 5.x：Astro 6+ 要求 Node 22，專案維持 Node 20（`package.json` engines、CI / deploy 都是 20） |
+| 動畫 | GSAP 3（npm `gsap`，免費含所有外掛） | `Observer`（輸入）、`SplitText`（逐字 / 逐行）、`ScrollTrigger`（已註冊，引擎本身不依賴捲動位置，保留給屏內自有捲動區） |
+| 星空 | Three.js | 只在 idle 後以動態 `import()` 載入，獨立 chunk（約 130 KB gzip） |
+| 頁面轉場 | Astro View Transitions（`<ClientRouter fallback="swap" />`） | 搭配 `transition:persist` 讓星空 / 游標層跨頁不重建 |
+| 字體 | `@fontsource-variable/noto-sans-tc` | 自架（不連 Google Fonts）；unicode-range 切片，瀏覽器只下載用到的字 |
+| 樣式 | 原生 CSS + CSS 變數 | token 在 `src/styles/tokens.css`，沒有 CSS 框架 |
+| 部署 | GitHub Pages + GitHub Actions | `base: '/demo-claude-in-slack'`；push 到 `main` 部署，PR 跑 build 檢查；不需要任何 secrets |
+| 執行環境 | Node.js 20 以上、npm | |
 
-## SPA 結構
+## 目錄結構
 
 ```
-index.html                         唯一的 HTML 入口，載入 /src/main.js
+astro.config.mjs               site / base（GitHub Pages）、靜態輸出、prefetch
+public/favicon.svg
 src/
-  main.js                          建立單一 Vue app：install router → await router.isReady() → mount；載入 tailwind.css 與所有門主題
-  App.vue                          App 層級：<router-view :route="displayRoute">（包在 :inert 容器內）+ 全域 <DoorTransition> + 全域 <LocaleSwitcher>（在 :inert 之外）
-  router/index.js                  路由表、meta、驗證守衛（beforeEach）
-  views/                           route view：LoginView、HomeView、BeachView（海灘，純氛圍頁）、SpaceView（宇宙，純氛圍頁）、ForestView（森林，純氛圍頁）
+  layouts/BaseLayout.astro     全站版型：head、<ClientRouter>、Starfield、FxLayer、Navbar、<main data-screens>、ScreenDots、Footer
   components/
-    DoorTransition.vue             雙開門 overlay（門板、接縫、CSS）
-    HudCard.vue                    首頁的 HUD 卡片
-    LocaleSwitcher.vue             全域語系切換器（EN | 中）
-  i18n/index.js                    vue-i18n 實例、語系偵測 / 持久化、setLocale、跨分頁同步
-  locales/                         zh-TW.js、en.js（所有翻譯字串，key 結構必須一致）
-  composables/
-    useDoorTransition.js           轉場時間軸與「畫面路由 / URL 路由分離」機制
-    useSession.js                  currentSession 與全域 session 監看（過期、跨分頁登出）
-  styles/door-themes/<theme>.css   每個主題一個檔案，定義門的 CSS 變數（main.js 以 import.meta.glob 自動載入）
-  shared/                          auth.js、config.js、tailwind.css、共用元件（NeonBackdrop、BeachBackdrop、WaveCanvas、SpaceBackdrop、StarCanvas、ForestBackdrop、ForestCanvas、NeonButton、WorldPlaceholder（目前沒有路由使用，保留作新世界的起手模板）…）
+    Screen.astro               「屏」元件（頁面唯一該用的版面單位）
+    Navbar.astro               導覽列 + 解決方案下拉（資料來自 data/site.ts）
+    Footer.astro               頁尾（固定在底部，只在最後一屏出現）
+    ScreenDots.astro           右側屏數點骨架（按鈕由 JS 建立）
+    Starfield.astro            CSS 星雲 / CSS 星空 / <canvas>（transition:persist）
+    FxLayer.astro              自訂游標 + 星塵拖尾層（transition:persist）
+  data/site.ts                 導覽 / 頁尾連結、解決方案清單、url() helper
+  pages/                       index.astro、solutions/index.astro、contact/index.astro（CTCC-13 示範頁）
+  styles/
+    tokens.css                 設計 token（唯一事實來源）
+    base.css                   reset、排版、a11y
+    screens.css                屏版面 / 狀態、View Transition CSS、reduced-motion 轉場
+    components.css             星空層、按鈕、卡片、導覽列、屏數點、頁尾、游標層
+    demo.css                   示範頁樣式（正式頁面會取代，可刪）
+  scripts/
+    main.ts                    全站進入點（只執行一次）；每頁要重做的事在 bootPage()
+    gsap.ts                    GSAP 外掛註冊（其他模組一律從這裡 import）
+    motion.ts                  prefers-reduced-motion / 指標能力 / 手機判斷
+    warp.ts                    曲速狀態（kickWarp）
+    starfield.ts               星空控制器：idle 後載入、WebGL 偵測、CSS 退路、視差
+    starfield-gl.ts            Three.js 星空（動態 import 的 chunk）
+    cursor.ts / magnetic.ts / hover-glow.ts / pointer.ts   共用互動元件
+    navbar.ts                  下拉選單 / 手機選單
+    chrome.ts                  頁尾隨屏顯示、切屏時收起下拉
+    transitions.ts             View Transition 的 JS 輔助
+    screens/                   整頁切換引擎（engine / hooks / dots / index / types）
 ```
 
-### Router
+## 設計 token（`src/styles/tokens.css`）
 
-- `createWebHashHistory(import.meta.env.BASE_URL)`：網址為 `/#/home` 形式，GitHub Pages 重新整理任何路由都不會 404；Vite base 不變（build / preview 為 `/demo-claude-in-slack/`，dev 為 `/`）。
-- 路由表（每個路由都有 `meta.theme` 與 `meta.title`（i18n key），需登入的有 `meta.requiresAuth`）：
+| 類別 | token | 說明 |
+| --- | --- | --- |
+| 色彩 | `--c-space-950…400` | 藍黑底色階，`950 = #030712` 為品牌底色 |
+| | `--c-yellow-50…800` | 品牌黃階，`400 = #ffd400`。**只用在重點**（主要 CTA、目前位置、點綴） |
+| | `--c-blue-50…900` | 品牌藍階，`500 = #00a1e0`；互動色、光暈、連結 |
+| | `--color-bg / surface / border / text / text-muted / text-faint / accent / link / focus` | 語意別名，元件請用這一層 |
+| 字體 | `--font-sans`、`--fw-*`（300–800）、`--fs-xs…display`（流體）、`--lh-*`、`--ls-*` | Noto Sans TC Variable |
+| 間距 | `--sp-1…16`（4px 基準）、`--gutter` | |
+| 圓角 | `--r-xs…xl`、`--r-pill` | |
+| 陰影 / 光暈 | `--shadow-sm/md/lg`、`--glow-blue`、`--glow-yellow`、`--glow-soft`、`--ring-focus` | |
+| 動態 | `--ease-out / in-out / warp`、`--dur-fast/base/slow/screen` | `--dur-screen` 與 `screens/engine.ts` 的 `DURATION` 同步 |
+| 版面 | `--nav-h`、`--dots-gap`、`--footer-reserve`、`--content-max`、`--z-*` | |
 
-| 路徑 | View | `meta.theme` | 需登入 |
-| --- | --- | --- | --- |
-| `/` | redirect 到 `/home` | | |
-| `/login` | `LoginView` | `neon` | 否 |
-| `/home` | `HomeView` | `neon` | 是 |
-| `/beach` | `BeachView` | `beach` | 是 |
-| `/space` | `SpaceView` | `space` | 是 |
-| `/forest` | `ForestView` | `forest` | 是 |
-| 其他任何路徑 | redirect 到 `/home` | | |
+規則：元件與頁面只使用 `var(--token)`；要新增顏色 / 間距先加 token。
 
-### 驗證守衛
+## 整頁切換引擎
 
-`router.beforeEach` 以 `auth.js` 的 `getSession()`（HMAC 簽章 + 效期，行為未改）判斷：
+### 約定（頁面作者要做的事）
 
-- 未登入存取 `meta.requiresAuth` 的路由 -> `/login`（`/` 與未知路徑先 redirect 到 `/home`，再由守衛轉到 `/login`）。
-- 已登入造訪 `/login` -> `/home`。
-- 登出（`logout()` 清除 session 後 `router.replace('/login')`）-> `/login`。
-- `App.vue` 的 `useSessionWatcher`：以 `session.exp` 設定單次 `setTimeout` 偵測過期 + 監聽 `storage`（`onSessionStorageChange`）偵測其他分頁登出，若目前在需登入的路由就 `router.replace('/login')`。`currentSession` 只由守衛寫入。
+頁面只需要用 `<Screen>` 組版（`BaseLayout` 已提供容器 `<main data-screens>`）：
 
-### 雙開門轉場
-
-每次路由切換（login↔home、home↔世界、登出、瀏覽器上一頁 / 下一頁）都播放：左右門板從兩側滑入在中央合上（0.6s）-> 停留 0.2s（此時才切換底下的 route view）-> 從中央向兩側打開（0.6s）。首次載入頁面不播放。
-
-機制（`composables/useDoorTransition.js`）：
-
-1. router 照常、立即完成導覽（含守衛與上一頁 / 下一頁），`router.currentRoute` 馬上更新。
-2. `App.vue` 不直接顯示 `currentRoute`，而是 `<router-view :route="displayRoute">`；`displayRoute` 只在門板完全合上時才被設為最新的 `currentRoute`。
-3. 轉場進行中又發生導覽（快速連點、上一頁）時不會重疊也不會卡死：這一輪結束後若 `currentRoute.fullPath` 與畫面不同，再播一輪直接到最新路由。門色以「該輪開始時」的目的地為準（若期間又導覽到別的主題，下一輪才換色）。`finally` 會保證 overlay 一定被收起。
-4. overlay 全螢幕、`z-index: 9999`、轉場期間 `pointer-events: auto` 擋住指標輸入，底下內容同時 `inert`（鍵盤也無法操作）。
-5. 無障礙：轉場結束（`inert` 解除）後把焦點移到新畫面的 `main`，並以 `aria-live` 區塊念出新頁面的標題（`meta.title` 翻譯後的文字）；首次載入不搶焦點。語系切換器在 `:inert` 之外，轉場期間仍可操作（見「多語系（i18n）」）。
-6. `prefers-reduced-motion: reduce`：門板不滑動，改為整片約 0.3s 淡入、淡出（`tailwind.css` 的全域減少動態規則已排除 `.door-overlay`）。
-
-### 主題換色機制（門的顏色）
-
-門的顏色由「**目的地**路由」的 `meta.theme` 決定：轉場時 overlay 會帶上 `data-theme="<theme>"`，門板 CSS 讀取以下變數：
-
-| 變數 | 說明 |
-| --- | --- |
-| `--door-bg` | 門板底色，color 或 gradient（用於 `background`） |
-| `--door-edge` | 門板內側邊框與中央接縫的顏色（color） |
-| `--door-glow` | 光暈顏色（color，建議帶透明度） |
-
-目前的門主題（`src/styles/door-themes/`）：
-
-| 主題 | 檔案 | 使用的路由 | 門的配色 |
-| --- | --- | --- | --- |
-| `neon` | `neon.css` | `/login`、`/home` | 深藍紫底 + 青色邊 + 紫色光暈（同時掛在 `:root` 當預設值） |
-| `beach` | `beach.css` | `/beach` | 夜藍 `#021A4D` -> 海藍 `#0277BD` -> 天藍 `#4FC3F7` 漸層底 + 淡天藍邊 + 天藍霓虹光暈 |
-| `space` | `space.css` | `/space` | 黑 `#05020A` -> 暗紅 `#2A050C` -> 深紅 `#B71C1C` 漸層底 + 霓虹紅 `#FF1744` 邊與光暈 |
-| `forest` | `forest.css` | `/forest` | 夜林綠 `#0B2A0F` -> 深草綠 `#1B5E20` -> 亮草綠 `#7CB342` 漸層底 + 淡草綠邊 `#AED581` + 草綠霓虹光暈 |
-
-門色看的是「目的地」路由：進入 `/beach` 是海灘色，從 `/beach` 回 `/home` 則是 neon 色（`/space`、`/forest` 同理）。
-
-### 如何新增世界 / 主題
-
-1. 新增 `src/views/XxxView.vue`（可複製 `WorldPlaceholder` 當起手模板）。
-2. 在 `src/router/index.js` 的路由表新增一行，各世界各佔獨立一行，世界 view 用 lazy import（不必改 import 區塊，並自動分 chunk；導覽會等 chunk 載入完才完成，之後才播門）：`{ path: '/xxx', name: 'xxx', component: () => import('../views/XxxView.vue'), meta: { theme: 'xxx', requiresAuth: true, title: 'routes.xxx.title' } }`，並在 `src/locales/zh-TW.js` 與 `en.js` 補上 `routes.xxx.title`。
-3. 新增 `src/styles/door-themes/xxx.css`：
-
-```css
-[data-theme='xxx'] {
-  --door-bg: linear-gradient(180deg, #..., #...);
-  --door-edge: #...;
-  --door-glow: rgb(... / 0.7);
-}
+```astro
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Screen from '../components/Screen.astro';
+---
+<BaseLayout title="頁面名稱">
+  <Screen id="hero" label="首屏">
+    <h1 class="display" data-split="chars">標題</h1>
+    <p class="lead" data-split="lines">內文…</p>
+    <a class="btn btn--primary" href="…" data-magnetic data-enter>按鈕</a>
+  </Screen>
+  <Screen id="next" label="第二屏">…</Screen>
+</BaseLayout>
 ```
 
-不需要修改 `main.js`、`DoorTransition.vue` 或 vite 設定。
+`<Screen>` 輸出 `<section id data-screen data-screen-label data-align>`。資料屬性：
 
-## 多語系（i18n）
+| 屬性 | 位置 | 說明 |
+| --- | --- | --- |
+| `data-screen` | section | 標記一屏（`<Screen>` 已加）。值 = id |
+| `id` | section | **必填**。是深連結 hash（`/page/#id`）與事件的識別；另外也支援 `#screen-N`（1 起算） |
+| `data-screen-label` | section | 屏數點 tooltip 與 aria-label |
+| `data-align` | section | `center`（預設）/ `start` / `end` |
+| `data-split="lines｜words｜chars"` | 文字元素 | SplitText 入場：`lines`（預設，行遮罩上滑）/ `words` / `chars`（逐字，以詞為單位換行，適合短標題；長中文句子請用 lines，否則整段不會換行） |
+| `data-enter="up｜fade｜scale"` | 任意元素 | 整塊入場（預設 `up`：淡入 + 位移） |
+| `data-depth="n"` | 任意元素 | 視差深度倍率（預設 1）；數字越大，進出場位移越多 |
+| `data-no-screen-nav` | 任意元素 | 其內的滾輪 / 觸控不切屏、也不 `preventDefault`（例如屏內自己的捲動區、手機選單） |
+| `data-no-screen-keys` | 任意元素 | 其內的鍵盤事件不切屏（例如下拉選單） |
+| `data-screen-hash="false"` | `<main data-screens>` | 關閉網址 hash 同步 |
 
-使用 `vue-i18n`（Composition 模式，`legacy: false`），只支援 **`zh-TW`（繁體中文）** 與 **`en`**；`fallbackLocale` 為 `en`。
+限制：**一屏的內容必須在一個視窗高度內放得下**；引擎不處理屏內捲動。手機請用 `svh` / 流體字級確認小螢幕。
 
-### 檔案位置
+### 行為
 
-| 檔案 | 內容 |
-| --- | --- |
-| `src/locales/zh-TW.js`、`src/locales/en.js` | 所有翻譯字串（巢狀物件，兩個檔案的 key 結構必須完全一致） |
-| `src/i18n/index.js` | `createI18n` 實例、`SUPPORTED_LOCALES`、語系偵測與持久化、`setLocale()`、`t()`（元件外使用）、`onLocaleStorageChange()`（跨分頁同步） |
-| `src/components/LocaleSwitcher.vue` | 全域切換器 |
-| `src/main.js` | `app.use(i18n)` |
+- **一次一屏、不停半屏**：單一 `animating` 旗標。切換進行中所有輸入（滾輪、觸控、鍵盤、點）都被忽略；網址 hash 變更會記下來，切換結束後再對齊。鎖在主轉場（`DURATION` ≈ 1.05s）結束時解除；進入內容的逐字 / 視差入場在獨立時間軸上，可能再多跑一小段，**不佔用輸入鎖**。初次進場（intro）不上鎖，期間的輸入會中斷 intro 並直接切換。
+- **滾輪**：GSAP Observer。`Ctrl` + 滾輪（瀏覽器 / 觸控板縮放）不攔截也不切屏；`data-ui-lock`（手機選單開啟）時 Observer 完全不 `preventDefault`，選單可正常捲動。同一次手勢累積 `|deltaY| ≥ 40` 才切換；兩個 wheel 事件間隔 > 120ms 才算新手勢，所以觸控板慣性滾動的尾巴不會連切多屏。
+- **觸控**：Observer，滑動距離 ≥ 48px 切一屏，一次滑動只切一屏。
+- **鍵盤**：`↓ / PageDown / Space` 下一屏，`↑ / PageUp / Shift+Space` 上一屏，`Home / End` 首 / 末屏。在輸入框、可編輯區、`data-no-screen-keys` 內不攔截；Space 在按鈕 / 連結上保留原本的「啟動」行為；`e.repeat` 忽略；`data-ui-lock` 時整個忽略（不 `preventDefault`，方向鍵 / 空白鍵照常捲動選單）。
+- **屏數點**：右側 dots，顯示 `目前/總數`，可點擊跳屏（一次跳多屏也只做一次轉場）；`aria-current="step"`，有 `aria-live` 播報。
+- **網址 hash**：載入時 `#id` → 對應屏；切屏後以 `history.replaceState`（保留 Astro 存在 `history.state` 的資料）更新 hash；同頁 hash 連結由引擎在 click 捕獲階段接手（Astro 對同頁 hash 只 pushState，不觸發 `hashchange`）；`hashchange`（含切換中收到的）也會處理；無 hash 視為第一屏；非法百分比編碼（例如 `#%`）視為沒有 hash，不會丟例外。第一屏不加 hash。
+- **焦點管理**：非作用中的屏設 `inert` + `aria-hidden`，離開的屏的內容不可被 Tab 到；若焦點原本在屏內，切換完成後移到新屏。
+- **頁面不捲動**：`html.js` 時 `overflow: hidden`；沒有 JS 時退回一般直向捲動頁面。
+- **View Transitions**：`astro:before-swap` 清除舊引擎（含還原 SplitText）、`astro:after-swap` 建立新引擎；導覽進行中（`astro:before-preparation`）引擎被鎖定，若 5 秒後這個引擎還在（導覽被中止、沒有 swap）就自動解鎖。
+- **失效保護**：引擎初始化若丟例外，`main.ts` 會移除 `<html>` 的 `js` class，退回「無 JS」的直向捲動版型，不會把使用者鎖在被 `overflow:hidden` 裁切的首屏。
 
-Key 命名：`meta.*`（描述）、`routes.<name>.title`（頁籤標題）、`switcher.*`、`login.*`（登入頁；之後各頁用自己的前綴，例如 `home.*`）。
+### 轉場語彙
 
-### 偵測與持久化
+屏切換與頁面切換共用同一組語彙，讓整站感覺一致：
 
-1. 首次造訪（`localStorage` 沒有 `neon.locale.v1`）：`navigator.language`（只看這個，不看 `navigator.languages`）以 `zh` 開頭 -> `zh-TW`，否則 `en`；因此 `zh-CN`、`zh-HK` 等目前都會是 `zh-TW`（尚未提供簡體）。
-2. 使用者手動切換時才寫入 `localStorage` 的 **`neon.locale.v1`**（值為 `zh-TW` 或 `en`）；之後儲存值優先於瀏覽器語言。無效的儲存值視為沒有。
-3. `localStorage` 的讀寫一律包 `try/catch`；不可用時（隱私模式等）app 仍可運作，只是無法記住選擇。
-4. 跨分頁同步：`App.vue` 掛載後監聽 `storage` 事件，**只處理 `localStorage` 的 `key === 'neon.locale.v1'`**，其他 key（尤其是 auth 的 `neon.session.v1`，否則會干擾登入狀態）與 `clear()`（key 為 `null`）都忽略；同步進來的切換不再回寫。
+1. **星空曲速**：星星沿畫面中心向外拉長成光軌並加速（Three.js 讀 `warpState`；CSS 退路用 `--warp` 縮放）。
+2. **遮罩擴散**：進入的屏以 `clip-path: circle()` 從起點（滾輪 / 鍵盤為畫面中心偏上；點擊屏數點從右側；換頁從點擊處）擴散，邊緣帶一圈光環。
+3. **內容視差**：離開的屏往鏡頭放大 + 淡出 + 模糊；內容依 `data-depth` 位移；進入的內容逐字 / 逐行 / 位移入場。
+4. 總時長約 1.05 秒（`DURATION`）。
 
-### 切換器（`LocaleSwitcher.vue`）
+**`prefers-reduced-motion`**：屏切換改為交叉淡入淡出（0.2 / 0.3s），不做曲速、遮罩、視差、逐字；頁面轉場改為 0.3s 淡入淡出（Astro 預設會在 reduced-motion 時 `!important` 關掉所有轉場動畫，`screens.css` 以 `html::view-transition-*` + `!important` 覆寫）；游標拖尾停用；星空不漂移（只畫一幀）。
 
-- 固定在畫面右下角（`position: fixed`，並避開 safe-area），緊湊的霓虹風 `EN | 中` 兩段式切換；所有頁面（login、home、beach、space、forest）都看得到。
-- 放在 `App.vue` 的 `:inert` 包裝**之外**，`z-index: 10000`（高於 `DoorTransition` 的 9999）：雙開門轉場期間仍浮在門之上，可點擊、可用鍵盤操作（切換語系不會中斷轉場、不改路由、不影響 session）。
-- 無障礙：外層 `role="group"` + 翻譯後的 `aria-label`；兩個 `<button>` 各自有原生語言名稱的 `aria-label`（`English` / `繁體中文`，不隨語系翻譯）與 `aria-pressed`，並以 `lang` 標示；可用 Tab / Enter / Space 操作；觸控裝置的點擊區放大到 44px；沒有切換動畫（只有顏色 transition，`prefers-reduced-motion` 由全域規則處理）。
-- 切換時即時生效、不重新載入頁面。
+### 頁面間轉場（`transition:persist`）
 
-### 文件層級
+- `<Starfield>`（`#starfield`）與 `<FxLayer>`（`#fx-layer`）使用 `transition:persist`：換頁時 DOM 節點與 `<canvas>` 都是同一個，不閃爍、不重新建立 WebGL context，曲速也能跨頁連續。
+- CSS（`screens.css`）：舊頁 `root` 快照隱藏、新頁 `root`（含活的星空）直接顯示；只有 `main`（`view-transition-name: page`）做轉場——舊內容放大淡出、新內容以圓形遮罩從點擊處擴散（`--vt-x / --vt-y`）。導覽列、屏數點、頁尾、游標層各自命名（`nav` / `dots` / `footer` / `fx`），固定在轉場內容之上。
+- `<html>` 的屬性（class、style）每次換頁都會被新頁面覆寫，所以 `transitions.ts` 的 `applyRootState()` 會在 `astro:after-swap` 重新套用（`js` class、`--vt-*`）。曲速的 `--warp` 只寫在 persist 的 `#starfield` 上，不受影響。**不要把需要跨頁保留的狀態放在 `<html>` 屬性上**，放在 persist 的元素上（例如 `#fx-layer[data-cursor]`）。
+- 不支援 View Transitions 的瀏覽器：`fallback="swap"` 直接換頁，引擎仍會在新頁做入場動畫。
 
-- `<html lang>`：隨語系即時更新為 `zh-TW` 或 `en`（`i18n/index.js` 的 `watch`）；`<meta name="description">` 同步。
-- `document.title`：路由的 `meta.title` 是 i18n key；`useDoorTransition.js` 的 `show()`（門合上、真正切換畫面時）翻譯後設定標題，語系切換時也會立刻以目前**畫面**的路由重設標題（轉場中途切換時，標題仍屬於目前顯示的畫面，轉場完成後才換成目的地的標題）。轉場結束後程式會把焦點移到新畫面的 `main`，但若焦點正在語系切換器上則不搶焦點。aria-live 的頁面宣告只在換頁時更新，切換語系不會重念。
-- `index.html` 的 `<title>`、meta description、`<html lang="en">`、`<noscript>` 是 JS 載入前（或停用 JS）的預設值，維持英文 / 雙語，JS 啟動後會被覆寫。
+### 公開 API
 
-### 如何新增字串
+```ts
+import { onScreensReady, getEngine } from '../scripts/screens';
+```
 
-1. 在 `src/locales/zh-TW.js` **與** `src/locales/en.js` 加上相同的 key。
-2. 元件內：`const { t } = useI18n()`，template 用 `{{ t('login.title') }}`、屬性用 `:aria-label="t('...')"`；元件外（router、composable）用 `import { t } from '../i18n/index.js'`。
-3. 陣列型字串（例如 `login.typewriter`）以 `tm()` + `rt()` 取得，長度以語系檔為準，增減台詞只需改語系檔（建議兩個語系筆數一致）。
-4. 不要把翻譯後的文字存進 ref（會在切換語系時卡在舊語言）；改存 key 或用 `computed`（例如 `LoginView` 的 `errorKey`、`typewriterLines`）。
-5. 訊息語法中 `{ } @ | $` 有特殊意義，要顯示這些字元請用 `{'@'}` 跳脫。
-6. 品牌 / 賽博龐克用語（`NEON//GRID`、`NEON GRID`、`SEC-NODE`、`HMAC-SHA256` 等）可保留英文。
-7. 英文語系不放中文（不要再寫「USERNAME 使用者名稱」這種雙語字串）。
+- `getEngine()` / `window.may4s.screens`：目前的 `ScreenEngine`。
+  - 屬性：`index`、`count`、`screens`（`{ index, id, label, el, splits }[]`）、`animating`、`locked`、`current`、`root`、`hooks`
+  - 方法：`goTo(index, source?)`、`next()`、`prev()`（被忽略時回傳 `false`）、`destroy()`
+- `onScreensReady(cb)`：註冊「引擎就緒」回呼，**每次換頁都會再呼叫**；頁面腳本在模組頂層呼叫一次即可。回呼可回傳清理函式。
+- `engine.hooks.register(target, hooks)`：`target` 為屏 id / element / `'*'`，`hooks` 可含 `beforeEnter`、`enter`、`afterEnter`、`leave`、`afterLeave`；`enter` / `leave` 可回傳 GSAP tween / timeline，引擎會放進主時間軸。`ctx` 為 `{ engine, from, to, direction, source, reduced, count }`；`reduced` 為 true 時不會呼叫 `enter` / `leave`。
+- 事件（`document` 上，`detail` 為 `ctx`）：`screen:ready`（引擎初始化完成）、`screen:leave`、`screen:enter`（開始切換；初次進場也會觸發一次）、`screen:change`（動畫完全結束）、`screen:destroy`。
+- DOM 狀態：`<section data-state="active｜entering｜leaving｜idle">`；`<main data-screens>` 上有 `data-screen-index`（0 起算）、`data-screen-count`、`data-screen-id`、`data-screen-animating`（切換中）、`data-ready`。
+- 全域除錯物件：`window.may4s = { screens, cursor(), starfield() }`。
 
-### 如何新增語言
+範例（在頁面裡替某一屏加自訂動畫）：
 
-1. 新增 `src/locales/<code>.js`（複製 `en.js` 後翻譯，key 完全一致）。
-2. 在 `src/i18n/index.js`：`import` 它、加進 `messages` 與 `SUPPORTED_LOCALES`，並視需要調整 `browserLocale()` 的偵測規則。
-3. 在 `LocaleSwitcher.vue` 的 `options` 加一個選項（`code`、顯示文字、原生語言名稱 `label`、`lang`）。切換器的顯示文字與 aria-label（`EN` / `中` / `English` / `繁體中文`）是寫在元件裡的**原生語言名稱**，不放進語系檔、也不隨目前語系翻譯；這是「英文模式不出現中文」的刻意例外（檢查殘留中文時要排除切換器）。只有群組標籤 `switcher.group` 走 i18n。
-4. 更新本節與 `CLAUDE.md`。
+```astro
+<script>
+  import { gsap } from '../scripts/gsap';
+  import { onScreensReady } from '../scripts/screens';
+  onScreensReady((engine) => {
+    engine.hooks.register('hero', {
+      enter: () => gsap.from('.my-orb', { scale: 0, duration: 1, ease: 'expo.out' }),
+    });
+  });
+</script>
+```
 
-### 目前的翻譯範圍
+## 星空背景
 
-- 已翻譯：頁籤標題（所有路由）、`<html lang>`、LoginView 的所有可見文字、錯誤訊息、Typewriter 台詞與 aria 文字。
-- 尚未翻譯（CTCC-12）：首頁與海灘 / 宇宙 / 森林世界頁的內文。
+- `<Starfield>`：CSS 星雲（三團漸層緩慢漂移）+ CSS 星空（`box-shadow` 星點，建置時以種子亂數產生）+ `<canvas>`。首屏只靠 CSS 就有完整背景，文字立即可讀。
+- 視差：滑鼠視差只寫在外層 `.sf-px[data-px]` 包裝上（GSAP 寫 transform），內層的 CSS 動畫（星雲漂移）與曲速縮放（`.sf-css`）在內層，兩者互不覆蓋。
+- `starfield.ts`：`window load` → 瀏覽器 idle（`requestIdleCallback`，timeout 2.5s）→ 偵測 WebGL → 動態 `import('./starfield-gl')`。狀態寫在 `#starfield[data-starfield]`：`pending → webgl | css`（`data-starfield-reason` 為退路原因：`no-webgl` / `init-error` / `context-lost`）。
+- `starfield-gl.ts`：單一 draw call 的 instanced quad；頂點著色器自己做透視投影（景深：近大遠小、近星受滑鼠視差影響大），`uTravel` 緩慢累加成漂移，`uWarp` 把星星沿向外方向拉長成光軌。桌機 3000 顆、手機（窄螢幕或觸控為主）1000 顆（`data-star-count`）。DPR 上限桌機 2 / 手機 1.5；連續掉幀時自動降低解析度與粒子數（自適應品質）。
+- 不支援 WebGL / 初始化失敗 / context lost → 維持 CSS 星空（含 CSS 版曲速縮放）。
+- `prefers-reduced-motion`：星空只畫一幀、無漂移、無滑鼠視差、無曲速。
 
-## 首頁世界入口
+## 共用互動元件
 
-- `src/components/WorldOrb.vue`：圓形霓虹按鈕（沿用 NeonButton 的手感；`accent` 邊框發光色、`base` 球體底色、slot 放 SVG 圖形；`router-link` 導覽，aria-label 由呼叫端傳入）。掃光等參數複製自 NeonButton，調整時需同步。
-- `src/components/WorldOrbs.vue`：首頁的三個入口（海灘 `/beach`、宇宙 `/space`、森林 `/forest`），以 `worlds` 陣列（每個世界一個物件，含配色與內嵌 SVG 圖示）+ `v-for` 產生。
+- **自訂游標 + 星塵拖尾**（`cursor.ts`、`<FxLayer>`）：只在 `(hover: hover) and (pointer: fine)` 啟用；觸控裝置 `#fx-layer` 保持 `hidden`、不綁任何事件。reduced-motion 時只留點 + 環，無拖尾。懸停在可互動元素上游標環放大。
+- **磁吸按鈕**（`magnetic.ts`）：`<a class="btn" data-magnetic>`（可 `data-magnetic="0.5"` 調強度）；滑鼠靠近（邊緣外 64px）時被吸向游標，離開彈性回位。觸控 / reduced-motion 停用。
+- **hover 光暈**（`hover-glow.ts` + CSS）：`.btn` / `.card` / `.nav-dropdown__item` / `[data-glow]` 會跟著游標位置顯示 radial-gradient 光暈（`--mx / --my`）。
 
-## 海灘世界（/beach）
+## 如何新增
 
-`src/views/BeachView.vue`：純氛圍頁面，沒有功能性內容——**賽博龐克海灘**：夜藍天空 + 合成波條紋太陽 + 發光霓虹海浪 + HUD 外框 + 故障標題（BEACH / 海灘）+ 「返回主頁」按鈕（`router.push('/home')`，因此會播放雙開門轉場）。路由 `meta.theme` 為 `beach`，需登入。
+- **新增頁面**：在 `src/pages/xxx/index.astro` 用 `BaseLayout` + `<Screen>`；在 `src/data/site.ts` 加導覽項目；站內連結用 `url('/xxx/')`（目錄型路徑以 `/` 結尾）。
+- **新增一屏**：加一個 `<Screen id="唯一id" label="屏數點文字">`；要被導覽深連結就把 id 放進 `site.ts`。
+- **新增解決方案深連結**：`site.ts` 的 `industrySolutions` / `softwareSolutions` 加一筆（`id` 對應解決方案頁的屏 id）；下拉選單與示範頁會自動更新。
+- **替換示範頁**：CTCC-14/15/16 直接改寫對應 `pages/*.astro`，保留 `<Screen>` 用法；完成後可刪除 `styles/demo.css`。
 
-- 風格：和首頁同一套賽博龐克語彙（霓虹發光、HUD 切角框、CRT 掃描線 + 掃過的亮帶、故障文字、合成波太陽、地平線光帶），但主色維持天藍 / 白，不使用首頁的紫 / 洋紅。重用首頁元件：`GlitchText`（標題；以 `--glitch-a` / `--glitch-b` 覆寫殘影顏色）、`NeonButton`（`beach` 變體）、`HudCard`（`beach` 變體，頂部三張狀態卡）、`bg-scanlines` / `animate-scan-bar` 等 utility；沒有直接用 `NeonBackdrop`（它綁定紫色天空 / 網格地板 / 數位雨），改由 `BeachBackdrop` 組裝同類圖層。
-- 配色：天藍 `#4FC3F7`、海藍 `#0288D1`、深藍 `#01579B`、夜藍 `#021A4D` / `#010B26`、淡天空 `#E1F5FE` + 白；沙色 `#F6E7C1` 只用在窄窄的沙灘（小面積點綴）。token 定義在 `tailwind.css` 的 `@theme`：`--color-beach-sky` / `-sea` / `-deep` / `-mist` / `-sand` / `-night` / `-abyss` / `-neon`、發光 `--text-shadow-beach-*` / `--shadow-beach-*`（utility 如 `text-beach-neon`、`shadow-beach-glow`、`text-shadow-beach-glow`），以及 `bg-beach-sun`（條紋太陽）；`WaveCanvas.vue` 裡的色碼需與這些 token 同步。字型只用 Orbitron / Rajdhani（`font-display` / `font-sans`），沒有新增字型。
-- `src/shared/components/BeachBackdrop.vue`：場景外層。天空漸層、星點（閃爍）、條紋太陽（暈光呼吸、下半沉進海面）、4 朵霓虹線框的雲（只用 `transform` / `opacity`；關鍵影格 `cloud-drift`、`sun-glow` 在 `tailwind.css`）、地平線光帶，下半部放 `WaveCanvas`，最上層是暈邊 + 掃描線 + 亮帶。`--sea` 變數是海面佔畫面高度的比例。
-- `src/shared/components/WaveCanvas.vue`：Canvas 2D 畫 6 層正弦海浪（深藍填色 + 發光的天藍 / 白浪頭線）、窄沙灘（含霓虹透視格線）與來回漫過沙灘的發光浪花。效能 / 清理規則（沿用 `RainCanvas` 模式）：DPR 上限 2、約 30fps、`ResizeObserver`；發光用「寬淡線 + 細亮線」疊畫而不是 `shadowBlur`；分頁隱藏（`visibilitychange`）時取消 rAF、回到前景再恢復；`prefers-reduced-motion` 時只畫一張靜態畫面（也會即時響應系統設定變更）；卸載時取消 rAF、斷開 observer、移除所有 listener。
+## 效能與無障礙規則
 
-## 宇宙世界（/space）
-
-`src/views/SpaceView.vue`：純氛圍頁面，沒有功能性內容——**賽博龐克宇宙**：黑色深空 + 紅色星雲光暈 + 閃爍星空與流星 + 底部暗紅星球弧線 + HUD 外框 + 故障標題（SPACE / 宇宙）+ 「返回主頁」按鈕（`router.push('/home')`，因此會播放雙開門轉場）。路由 `meta.theme` 為 `space`，需登入。結構完全比照 `/beach`。無障礙：DOM 順序是 `main`（h1 + 返回按鈕）在前，純裝飾的假資料狀態卡與 HUD 角標都是 `aria-hidden`，視覺上用 grid 的 `row-start` 維持卡片在標題上方。`NeonButton space` 的 focus 外框是紅色，hover 背景改為深紅（`#B71C1C` -> `#8E1212`）以維持白字對比。
-
-- 風格：同一套賽博龐克語彙（霓虹發光、HUD 切角框、CRT 掃描線 + 掃過的亮帶、故障文字），主色為黑 + 紅，不使用首頁的紫 / 洋紅。重用 `GlitchText`（`--glitch-a` / `--glitch-b` 覆寫為紅色殘影）、`NeonButton`（`space` 變體）、`HudCard`（`space` 變體：邊框、標題、四角標與 hover 邊框都是紅色；頂部三張狀態卡 SECTOR / ORBIT / SIGNAL）。
-- 配色：霓虹紅 `#FF1744`、深紅 `#B71C1C`、黑 `#05020A`。token 在 `tailwind.css` 的 `@theme`：`--color-space-void` / `-deep` / `-neon` / `-crimson` / `-ember` / `-mist`、發光 `--text-shadow-space-*` / `--shadow-space-*`（utility 如 `text-space-neon`、`shadow-space-glow`、`text-shadow-space-glow`）；`--color-space-deep` 用在 `HudCard space` 的卡片底色；`StarCanvas.vue` 裡的色碼需與這些 token 同步。字型只用 Orbitron / Rajdhani。
-- `src/shared/components/SpaceBackdrop.vue`：場景外層。黑底 + 兩層紅色星雲（徑向漸層，只用 `transform` / `opacity` 緩慢飄移，關鍵影格 `nebula-drift`）、`StarCanvas`、底部超大圓只露出上緣的暗紅星球弧線（邊緣亮線 + 大氣光暈呼吸，關鍵影格 `planet-glow`），最上層是暈邊 + 掃描線 + 亮帶。
-- `src/shared/components/StarCanvas.vue`：Canvas 2D 畫閃爍的星空（固定種子的亂數，位置每次一致；星數依畫面面積決定，上限 260；四種色調：白 `#ffffff`、淡紅 `#ffd2d9`（不是 token，只用在星點）、`--color-space-ember` `#ff5252`、`--color-space-neon` `#ff1744`）與偶爾劃過的紅白流星（同時最多 3 顆）。效能 / 清理規則同 `WaveCanvas`：DPR 上限 2、約 30fps、`ResizeObserver`；分頁隱藏時取消 rAF、回到前景再恢復（dt 歸零避免流星瞬移）；`prefers-reduced-motion` 時只畫一張靜態畫面（含一顆凍結的流星，也會即時響應設定變更）；卸載時取消 rAF、斷開 observer、移除所有 listener。
-- 只改 `/beach`、`/space`：`/forest` 見下節。
-
-## 森林世界（/forest）
-
-`src/views/ForestView.vue`：純氛圍頁面，沒有功能性內容——**賽博龐克森林**：深綠夜空 + 月亮 + 多層樹木剪影 + 落葉 + 螢火蟲 + HUD 外框（四角標與頂部狀態列）+ 故障標題（FOREST / 森林）+ 「返回主頁」按鈕（`router.push('/home')`，因此會播放雙開門轉場）。路由 `meta.theme` 為 `forest`，需登入。
-
-- 風格：和首頁 / 海灘同一套賽博龐克語彙（霓虹發光、HUD 角標、CRT 掃描線 + 掃過的亮帶、故障文字），主色為草綠，不使用首頁的紫 / 洋紅。重用 `GlitchText`（以 `--glitch-a` / `--glitch-b` 覆寫殘影顏色為草綠）與 `bg-scanlines` / `animate-scan-bar` / `animate-float` 等 utility；**沒有**在共用的 `NeonButton` / `HudCard` 加森林變體，返回按鈕以 `ForestView` 內的 scoped class + `--forest-*` 變數自行上色。
-- 配色：亮草綠 `#7CB342`、深草綠 `#1B5E20`、夜林綠 `#0B2A0F`、最深 `#06180A`；文字為中性奶油色 `#F5EBD0`（月亮、螢火蟲也用奶油色）。字型只用 Orbitron / Rajdhani（`font-display` / `font-sans`），沒有新增字型。
-- Token：定義在獨立的 `src/styles/forest.css`（純 CSS 變數與 keyframes，**不改 `tailwind.css`**，避免與其他世界衝突）：`--forest-bright` / `-deep` / `-night` / `-abyss` / `-cream` / `-light` / `-pale` / `-moss`、`--forest-glow`、`--forest-shadow-glow(-lg)` / `--forest-shadow-inset(-lg)`、`--forest-text-glow`、`--forest-text-shadow-sm`，以及 `forest-sway` / `forest-mist` / `forest-moon` 關鍵影格。`[data-theme]` 只掛在門 overlay 上，所以 token 放在 `:root`，由 `ForestView` / `ForestBackdrop` import；`ForestBackdrop` / `ForestView` 以 `var(--forest-*)` 引用 token（只有樹影漸層、地平線亮色等單一用途色碼寫在元件內）；`ForestCanvas.vue` 的色碼與 `door-themes/forest.css`（`main.js` 全域載入，不能依賴只在進入 /forest 才載入的 `forest.css`）是寫死的，改 token 時需同步。
-- `src/shared/components/ForestBackdrop.vue`：場景外層。夜空漸層、月亮（暈光呼吸）、3 層松樹剪影（遠 / 中 / 近，越近越深越高；inline SVG，由固定公式產生，以 `transform` 緩慢左右搖曳、各層週期與相位不同）、兩條緩慢飄移的霧，中間夾 `ForestCanvas`，最上層是暈邊 + 掃描線 + 亮帶。
-- `src/shared/components/ForestCanvas.vue`：Canvas 2D 畫落葉（正弦左右擺動 + 自轉 + 翻面）與螢火蟲（慢速漂移、閃爍、柔光）。粒子總數桌機 48（落葉 20 + 螢火蟲 28）、手機（寬 < 640px）20，不超過 50；位置全由固定公式決定（不用 `Math.random`），所以靜態畫面穩定；標題區域的粒子會調暗以維持可讀性。
-- 效能 / 清理規則（沿用 `WaveCanvas` 模式）：DPR 上限 2、約 30fps、`ResizeObserver`；發光用預先畫好的柔光 sprite + `drawImage`（不用 `shadowBlur`）；分頁隱藏（`visibilitychange`）時取消 rAF、回到前景再恢復；`prefers-reduced-motion` 時只畫一張靜態畫面（也會即時響應系統設定變更），CSS 的搖曳 / 霧 / 月亮動畫同時停掉；卸載時取消 rAF、斷開 observer、移除所有 listener。
-- 只改 `/forest`：`/beach`、`/space`、首頁、router、`main.js`、`tailwind.css` 都沒有變動。
+- 首屏不得依賴 Three.js；Three.js 必須維持動態 import 在 idle 之後。CI 會檢查：含 `WebGLRenderer` 的 JS 只能是 `starfield-gl.*.js`，而且各頁 HTML 不得引用 `starfield-gl`（確保 Three.js 沒被打進首屏、也沒被 preload）。
+- 沒有外部請求（字體自架、無第三方腳本 / 分析）。
+- Canvas / rAF 一律掛在 `gsap.ticker`（分頁隱藏時自動暫停）；DPR 設上限；游標拖尾粒子有數量上限且沒有粒子時停止迴圈。
+- 所有動畫都要考慮 `prefers-reduced-motion`（見上）；新增動畫時用 `prefersReducedMotion()`（`scripts/motion.ts`）或 CSS media query 降級。
+- 鍵盤：所有互動元素可 Tab 到並有 `:focus-visible` 外框；非作用中的屏 `inert`；導覽列下拉支援 ↓ / Esc；有「跳到主要內容」連結。
+- 文字對比：內文與次要文字 token（`--color-text-muted` / `--color-text-faint`）在 `#030712` 上對比皆 > 5:1。

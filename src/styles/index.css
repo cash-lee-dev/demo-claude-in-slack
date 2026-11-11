@@ -1,0 +1,6 @@
+@import '@fontsource-variable/noto-sans-tc';
+@import './tokens.css';
+@import './base.css';
+@import './screens.css';
+@import './components.css';
+@import './demo.css';

@@ -1,50 +1,41 @@
 # CLAUDE.md
 
-NEON//GRID：賽博龐克霓虹風格的 Vue 3 + Vite + Tailwind CSS 單頁應用（SPA，vue-router hash 模式），純前端登入（Web Crypto HMAC-SHA-256），登入後進入首頁 "This is Your World!"，所有頁面切換有雙開門轉場，部署到 GitHub Pages。
+May4s 伊原力科技官網改版（純前端、Astro 靜態站）：深色科技風 + 浩瀚星空（Three.js）+ 整頁切換（GSAP Observer / SplitText）+ 頁面間轉場（Astro View Transitions）。目前只有繁體中文。部署到 GitHub Pages。
 
 ## 需要了解專案時請閱讀
 
 專案文件都放在 [`docs/`](./docs/README.md)，先看索引，再依需要閱讀各分類：
 
 - @docs/README.md — 文件索引與維護規則
-- @docs/architecture.md — 專案架構：專案目的與使用的技術
+- @docs/architecture.md — 專案架構：目的、技術、目錄結構、設計 token、整頁切換引擎 API、如何新增頁面 / 屏
 
 ## 常用指令
 
 ```bash
-npm ci               # 安裝依賴（Node 20+；vue-i18n 宣告 node>=22，Node 20 上只會出現 EBADENGINE 警告，刻意接受）
-npm run dev          # 開發伺服器（base 為 /）
-npm run build        # 打包到 dist/（base 預設 /demo-claude-in-slack/）
-npm run preview      # 預覽打包結果
-npm run hash -- <password>   # 以 hash key 產生密碼 hash
+npm ci               # 安裝依賴（Node 20+）
+npm run dev          # 開發伺服器（http://localhost:4321/demo-claude-in-slack/）
+npm run build        # 靜態輸出到 dist/（base 為 /demo-claude-in-slack/）
+npm run preview      # 預覽 dist/
 ```
 
-## SPA 結構速查
+## 結構速查
 
-- 單一入口：`index.html` + `src/main.js`（單一 Vue app，`App.vue` 內是 `<router-view>`、全域 `DoorTransition` 與全域 `LocaleSwitcher`）。**不要**再新增 HTML 入口，CI 會檢查 `dist` 只有一個 HTML。
-- 路由：`src/router/index.js`（hash 模式）。每個路由都要有 `meta.theme`，需登入的加 `meta.requiresAuth: true`；導覽一律用 `router.push/replace`，不要用 `window.location`。
-- 守衛：`router.beforeEach` 使用 `src/shared/auth.js` 的 `getSession()`（auth 行為不可改）；未登入 -> `/login`、已登入造訪 `/login` -> `/home`、未知路徑 -> `/home`。session 過期（`exp` 計時）/ 跨分頁登出由 `useSessionWatcher`（`composables/useSession.js`）踢回 `/login`。
-- 轉場：`composables/useDoorTransition.js` 把「畫面路由（`displayRoute`）」與「URL 路由」分離，門合上時才切換畫面；進行中的導覽會排隊、不重疊；reduced-motion 改淡入淡出。
-- 世界與門主題：`/home`、`/login` 用 `neon`；`/beach` 已實作（賽博龐克海灘，主色天藍 / 白，重用 `GlitchText` / `NeonButton beach` / `HudCard beach`；`BeachView` + `shared/components/BeachBackdrop.vue` / `WaveCanvas.vue`，主題 `beach`，`door-themes/beach.css`，token 為 `tailwind.css` 的 `--color-beach-*`）；`/space` 已實作（賽博龐克宇宙，黑底 + 紅色霓虹 `#FF1744` / `#B71C1C`，重用 `GlitchText` / `NeonButton space` / `HudCard space`；`SpaceView` + `shared/components/SpaceBackdrop.vue` / `StarCanvas.vue`，主題 `space`，`door-themes/space.css`，token 為 `tailwind.css` 的 `--color-space-*`）；`/forest` 已實作（賽博龐克森林，主色草綠亮 `#7CB342` / 深 `#1B5E20` + 奶油文字；`ForestView` + `shared/components/ForestBackdrop.vue` / `ForestCanvas.vue`，主題 `forest`，`door-themes/forest.css`，token 為獨立的 `src/styles/forest.css` 的 `--forest-*`，不在 `tailwind.css`）；三個世界都已實作。Canvas 元件須遵守：DPR 上限 2、分頁隱藏暫停、reduced-motion 靜態、卸載時清掉 rAF / listener。
-- 多語系（i18n，僅 `zh-TW` / `en`）：使用 `vue-i18n`（Composition 模式）。字串放在 `src/locales/zh-TW.js` 與 `src/locales/en.js`（key 結構必須一致），初始化與偵測 / 持久化在 `src/i18n/index.js`。首次造訪依 `navigator.language`（`zh` 開頭 -> `zh-TW`，否則 `en`）；使用者手動切換後存 `localStorage` 的 `neon.locale.v1`，之後以儲存值為準（讀寫都要 try/catch）。全域切換器 `src/components/LocaleSwitcher.vue` 掛在 `App.vue` 的 `:inert` 包裝**之外**（`z-index: 10000`，轉場時浮在門之上仍可操作）。`document.title`、`<html lang>`、meta description 隨語系即時更新；路由的 `meta.title` 存的是 i18n key（`routes.<name>.title`），不是文字。**新增任何使用者看得到的文字都要走 i18n**（`useI18n()` 的 `t('key')`），兩個語系檔同步新增；首頁與三個世界頁的內文翻譯由 CTCC-12 處理。`storage` 事件只能處理 `neon.locale.v1`（不得被 `neon.session.v1` 觸發）。細節見 @docs/architecture.md「多語系（i18n）」。
-- 新增世界 / 主題：新增 `src/views/XxxView.vue`、在路由表加獨立一行（lazy import：`component: () => import('../views/XxxView.vue')`，`meta.theme: 'xxx'`）、新增 `src/styles/door-themes/xxx.css` 定義 `[data-theme='xxx']` 的 `--door-bg` / `--door-edge` / `--door-glow`（自動載入，不必改其他檔案）。詳見 @docs/architecture.md。
-
-## 環境變數
-
-複製 `.env.example` 為 `.env`（已被 `.gitignore` 忽略）。**絕對不要提交真實的值。**
-
-- `VITE_AUTH_HASH_KEY`：密碼雜湊用的 key
-- `VITE_ADMIN_USERNAME`：管理員帳號
-- `VITE_ADMIN_PASSWORD_HASH`：管理員密碼的 hash（建議；`npm run hash -- <password>` 產生）
-- `VITE_ADMIN_PASSWORD`：（選填備援）明文密碼，僅在沒有設定 hash 時使用
+- 技術：Astro 5（刻意停在 5.x，因為 Astro 6+ 需要 Node 22，專案維持 Node 20）、GSAP（`gsap` npm 套件，含 Observer / SplitText / ScrollTrigger）、Three.js、`@fontsource-variable/noto-sans-tc`（字體自架，不連外部）。
+- 站內連結一律用 `src/data/site.ts` 的 `url()` / `solutionHref()`（會帶 GitHub Pages 的 base path）；導覽 / 頁尾資料也在這個檔案。
+- 所有頁面都用 `src/layouts/BaseLayout.astro`，內容由 `<Screen id="…" label="…">`（`src/components/Screen.astro`）組成，**一個 `<Screen>` = 一屏**。屏內動畫用資料屬性：`data-split`（逐字 / 逐詞 / 逐行）、`data-enter`（整塊入場）、`data-depth`（視差深度）。一屏的內容必須在一個視窗高度內放得下。
+- 設計 token 只在 `src/styles/tokens.css` 定義；元件與頁面只用 `var(--token)`，不要寫死色碼 / 間距。黃色 `#ffd400` 只用在重點（主要 CTA、目前位置），避免霓虹賽博龐克感。
+- 整頁切換引擎在 `src/scripts/screens/`；進出場客製用 `onScreensReady((engine) => engine.hooks.register(id, {...}))`，事件為 `screen:ready|leave|enter|change|destroy`。**不要**另外在頁面裡自己監聽 wheel / touch / 方向鍵。
+- 星空（`<Starfield>`）與游標層（`<FxLayer>`）使用 `transition:persist`，**不可**移除，也不要在頁面裡重複建立；Three.js 一定要維持動態 import（idle 後載入）。
+- `prefers-reduced-motion` 必須降級：關閉游標拖尾 / 曲速 / 視差，屏切換與頁面轉場改為淡入淡出。新增動畫時要一併處理。
+- 觸控裝置不啟用自訂游標與磁吸按鈕（以 `(hover: hover) and (pointer: fine)` 判斷）。
+- 目前 `/`、`/solutions/`、`/contact/` 是 CTCC-13 的**示範頁**（只為驗證引擎）；正式設計由 CTCC-14（首頁）、CTCC-15（解決方案）、CTCC-16（聯絡）取代，樣式在 `src/styles/demo.css`，可隨之刪除。
 
 ## 流程
 
-- PR 一律以 `main` 為目標分支。
-- push 到 `main` 後由 GitHub Actions（`.github/workflows/deploy.yml`）建置並部署到 GitHub Pages；PR 會跑 `ci.yml` 的 build 檢查。
-- 部署環境是 GitHub Environment **`Prod`**（`deploy.yml` 的 `build` job 指定 `environment: Prod`）：三個 `VITE_*` 值（hash key、管理員帳號、管理員密碼 hash；明文密碼為選填備援）要設定在 Settings → Environments → Prod 的 Environment secrets，不是 repository secrets。Pages Source 需為 GitHub Actions。
+- PR 一律以 `main` 為目標分支；PR 會跑 `.github/workflows/ci.yml`（`npm ci` + `npm run build` + 檢查 dist 內容）。
+- push 到 `main` 後由 `.github/workflows/deploy.yml` 建置並部署到 GitHub Pages（Settings → Pages → Source 需為 GitHub Actions；部署環境 `github-pages`）。純靜態站，不需要任何 secrets 或環境變數。
 
 ## 維護文件的規則
 
 - 新增文件分類時：在 `docs/README.md` 的索引加上連結，並在本檔「需要了解專案時請閱讀」加上引用。
-- 變更使用的技術、專案目的或環境變數時，同步更新 `docs/` 與本檔。
+- 變更使用的技術、專案目的、引擎 API、設計 token 或 Node 版本時，同步更新 `docs/` 與本檔。

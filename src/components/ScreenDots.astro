@@ -1,0 +1,14 @@
+---
+/**
+ * 屏數導覽點（右側）。骨架由這裡提供，按鈕由 scripts/screens/dots.ts 依引擎事件建立。
+ */
+---
+
+<nav id="screen-dots" class="screen-dots" aria-label="屏數導覽" hidden>
+  <p class="screen-dots__count" aria-hidden="true">
+    <b data-dots-current>01</b>
+    <span data-dots-total>00</span>
+  </p>
+  <ol class="screen-dots__list"></ol>
+  <p class="sr-only" aria-live="polite" data-dots-live></p>
+</nav>

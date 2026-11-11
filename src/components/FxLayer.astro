@@ -1,0 +1,9 @@
+---
+/** 自訂游標 + 星塵拖尾層（transition:persist）。預設 hidden，只有桌機的精確指標才會被 cursor.ts 啟用。 */
+---
+
+<div id="fx-layer" class="fx-layer" hidden aria-hidden="true" data-cursor="off" data-trail="off" transition:persist="fx-layer">
+  <canvas class="fx-trail"></canvas>
+  <div class="fx-ring"></div>
+  <div class="fx-dot"></div>
+</div>

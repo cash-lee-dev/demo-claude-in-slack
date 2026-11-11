@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Screen from '../../components/Screen.astro';
+import { allSolutions, industrySolutions, url } from '../../data/site';
+
+// 每個解決方案一屏，id 與導覽列下拉的深連結（/solutions/#planet-N）對應。
+const hue = [200, 212, 224, 196, 236, 250, 188]; // 星球色相（藍 → 靛）
+---
+
+<!--
+  CTCC-13 示範解決方案頁：用資料迴圈產生佔位屏，驗證深連結 / 引擎。
+  正式設計由 CTCC-15 取代。
+-->
+<BaseLayout title="解決方案" description="May4s 解決方案：客製化製造電商、售後服務管理、經銷商與代理商管理，以及 Salesforce、Slack、LAURELIN、Shopify 平台。">
+  <Screen id="overview" label="總覽">
+    <div class="stack-lg">
+      <p class="eyebrow" data-enter>Solutions</p>
+      <h1 class="display" data-split="chars">解決方案</h1>
+      <p class="lead" data-split="lines">七顆星球，七種把企業營運變聰明的方式。向下滑動，依序探索（佔位內容）。</p>
+      <div class="row" data-enter>
+        <a class="btn btn--primary" href="#planet-1" data-magnetic>從第一顆星球開始 <span class="btn__arrow" aria-hidden="true">→</span></a>
+        <a class="btn" href={url('/contact/')} data-magnetic>聯絡我們</a>
+      </div>
+    </div>
+  </Screen>
+
+  {allSolutions.map((s, i) => (
+    <Screen id={s.id} label={s.label} class={i % 2 ? 'planet-screen planet-screen--flip' : 'planet-screen'}>
+      <div class="planet-layout">
+        <div class="stack-lg">
+          <p class="eyebrow" data-enter>{industrySolutions.some((x) => x.id === s.id) ? '產業解決方案' : '軟體與平台'} · {String(i + 1).padStart(2, '0')}</p>
+          <h2 class="h2" data-split="lines">{s.label}</h2>
+          <p class="lead" data-split="lines">{s.desc}（佔位內容）。</p>
+          <div class="row" data-enter>
+            <a class="btn btn--primary" href={url('/contact/')} data-magnetic>諮詢這個方案 <span class="btn__arrow" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+        <div class="planet" style={`--h:${hue[i]}`} aria-hidden="true" data-enter="scale" data-depth="1.8">
+          <span class="planet__ring"></span>
+        </div>
+      </div>
+    </Screen>
+  ))}
+</BaseLayout>
